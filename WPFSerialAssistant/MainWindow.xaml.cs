@@ -62,6 +62,10 @@ namespace WPFSerialAssistant
             ini = new ReadWriteIni.v1.IniHelper(configPath);
             ini.Deserialize(ref Config);
 
+            tbxSendData1.Text = Config.SendData1;
+            tbxSendData2.Text = Config.SendData2;
+            tbxSendData3.Text = Config.SendData3;
+
             // 加载配置信息
             LoadConfig();
 
@@ -174,10 +178,9 @@ namespace WPFSerialAssistant
         /// 
         /// </summary>
         /// <returns></returns>
-        private bool SendData()
+        private bool SendData(string sendText)
         {
-            string textToSend = sendDataTextBox.Text;
-            if (string.IsNullOrEmpty(textToSend))
+            if (string.IsNullOrEmpty(sendText))
             {
                 Alert("要发送的内容不能为空！");
                 return false;
@@ -185,22 +188,22 @@ namespace WPFSerialAssistant
 
             if (autoSendEnableCheckBox.IsChecked == true)
             {
-                return SerialPortWrite(textToSend, false);
+                return SerialPortWrite(sendText, false);
             }
             else
             {
-                return SerialPortWrite(textToSend);
+                return SerialPortWrite(sendText);
             }
         }
 
         private void AutoSendData()
         {
-            bool ret = SendData();
+            //bool ret = SendData();
 
-            if (ret == false)
-            {
-                return;
-            }
+            //if (ret == false)
+            //{
+            //    return;
+            //}
 
             // 启动自动发送定时器
             StartAutoSendDataTimer(GetAutoSendDataInterval());
@@ -281,7 +284,7 @@ namespace WPFSerialAssistant
             config.Add("encoding", encodingComboBox.SelectedIndex);
 
             // 保存发送区文本内容
-            config.Add("sendDataTextBoxText", sendDataTextBox.Text);
+            config.Add("sendDataTextBoxText", tbxSendData1.Text);
 
             // 自动发送时间间隔
             config.Add("autoSendDataInterval", autoSendIntervalTextBox.Text);
@@ -357,9 +360,9 @@ namespace WPFSerialAssistant
             int encodingIndex = config.GetInt("encoding");
             encodingComboBox.SelectedIndex = encodingIndex;
 
-            // 获取发送区内容
-            string sendDataText = config.GetString("sendDataTextBoxText");
-            sendDataTextBox.Text = sendDataText;
+            //// 获取发送区内容
+            //string sendDataText = config.GetString("sendDataTextBoxText");
+            //tbxSendData1.Text = sendDataText;
 
             // 获取自动发送数据时间间隔
             string interval = config.GetString("autoSendDataInterval");
@@ -605,7 +608,8 @@ namespace WPFSerialAssistant
         }
         #endregion
 
-        #region Event handler for buttons and so on.
+        #region 按钮事件
+
         private void openClosePortButton_Click(object sender, RoutedEventArgs e)
         {
             if (serialPort.IsOpen)
@@ -645,14 +649,16 @@ namespace WPFSerialAssistant
 
         private void sendDataButton_Click(object sender, RoutedEventArgs e)
         {
-            if (autoSendEnableCheckBox.IsChecked == true)
-            {
-                AutoSendData();
-            }
-            else
-            {
-                SendData();
-            }
+            string sendText = "";
+            Button btn = sender as Button;
+            if (btn == null) return;
+            if(btn.Name.IndexOf("1") >= 0)
+                sendText = tbxSendData1.Text.Trim();
+            else if (btn.Name.IndexOf("2") >= 0)
+                sendText = tbxSendData2.Text.Trim();
+            else if (btn.Name.IndexOf("3") >= 0)
+                sendText = tbxSendData3.Text.Trim();
+            SendData(sendText);
         }
 
         private void saveRecvDataButton_Click(object sender, RoutedEventArgs e)
@@ -732,13 +738,13 @@ namespace WPFSerialAssistant
                         sendMode = SendMode.Character;
                         Information("提示：发送字符文本。");
                         // 将文本框中内容转换成char
-                        sendDataTextBox.Text = Utilities.ToSpecifiedText(sendDataTextBox.Text, SendMode.Character, serialPort.Encoding);
+                        tbxSendData1.Text = Utilities.ToSpecifiedText(tbxSendData1.Text, SendMode.Character, serialPort.Encoding);
                         break;
                     case "hex":
                         // 将文本框中的内容转换成hex
                         sendMode = SendMode.Hex;
                         Information("提示：发送十六进制。输入十六进制数据之间用空格隔开，如：1D 2A 38。");
-                        sendDataTextBox.Text = Utilities.ToSpecifiedText(sendDataTextBox.Text, SendMode.Hex, serialPort.Encoding);
+                        tbxSendData1.Text = Utilities.ToSpecifiedText(tbxSendData1.Text, SendMode.Hex, serialPort.Encoding);
                         break;
                     default:
                         break;
@@ -758,7 +764,7 @@ namespace WPFSerialAssistant
 
         private void clearSendDataTextBox_Click(object sender, RoutedEventArgs e)
         {
-            sendDataTextBox.Clear();
+            tbxSendData1.Clear();
         }
 
         private void appendRadioButton_Click(object sender, RoutedEventArgs e)
@@ -801,13 +807,13 @@ namespace WPFSerialAssistant
         /// <param name="e"></param>
         private void AutoSendDataTimer_Tick(object sender, EventArgs e)
         {
-            bool ret = false;
-            ret = SendData();
+            //bool ret = false;
+            //ret = SendData();
 
-            if (ret == false)
-            {
-                StopAutoSendDataTimer();
-            }
+            //if (ret == false)
+            //{
+            //    StopAutoSendDataTimer();
+            //}
         }
 
         /// <summary>
@@ -832,6 +838,9 @@ namespace WPFSerialAssistant
 
                     //写配置文件
                     Config.PortName = portsComboBox.Text;
+                    Config.SendData1 = tbxSendData1.Text.Trim();
+                    Config.SendData2 = tbxSendData2.Text.Trim();
+                    Config.SendData3= tbxSendData3.Text.Trim();
                     ini.SerializeToFile(Config);
                 }
             }
@@ -870,7 +879,7 @@ namespace WPFSerialAssistant
             // Enter发送数据
             if (e.Key == Key.Enter)
             {
-                SendData();
+                //SendData();
             }
         }
 
@@ -906,38 +915,40 @@ namespace WPFSerialAssistant
             // 将缓冲区所有字节读取出来
             sp.Read(tempBuffer, 0, bytesToRead);
 
-            // 检查是否需要清空全局缓冲区先
-            if (shouldClear)
-            {
-                receiveBuffer.Clear();
-                shouldClear = false;
-            }
+            BuffAppendRichTextBox(2, tempBuffer.ToArray());
+
+            //// 检查是否需要清空全局缓冲区先
+            //if (shouldClear)
+            //{
+            //    receiveBuffer.Clear();
+            //    shouldClear = false;
+            //}
 
             // 暂存缓冲区字节到全局缓冲区中等待处理
-            receiveBuffer.AddRange(tempBuffer);
+            //receiveBuffer.AddRange(tempBuffer);
 
-            if (receiveBuffer.Count >= THRESH_VALUE)
-            {
-                //Dispatcher.Invoke(new Action(() =>
-                //{
-                //    recvDataRichTextBox.AppendText("Process data.\n");
-                //}));
-                // 进行数据处理，采用新的线程进行处理。
-                Thread dataHandler = new Thread(new ParameterizedThreadStart(ReceivedDataHandler));
-                dataHandler.Start(receiveBuffer);
-            }
+            //if (receiveBuffer.Count >= THRESH_VALUE)
+            //{
+            //    //Dispatcher.Invoke(new Action(() =>
+            //    //{
+            //    //    recvDataRichTextBox.AppendText("Process data.\n");
+            //    //}));
+            //    // 进行数据处理，采用新的线程进行处理。
+            //    Thread dataHandler = new Thread(new ParameterizedThreadStart(ReceivedDataHandler));
+            //    dataHandler.Start(receiveBuffer);
+            //}
 
-            // 启动定时器，防止因为一直没有到达缓冲区字节阈值，而导致接收到的数据一直留存在缓冲区中无法处理。
-            StartCheckTimer();
+            //// 启动定时器，防止因为一直没有到达缓冲区字节阈值，而导致接收到的数据一直留存在缓冲区中无法处理。
+            //StartCheckTimer();
 
-            this.Dispatcher.Invoke(new Action(() =>
-            {
-                if (autoSendEnableCheckBox.IsChecked == false)
-                {
-                    Information("");
-                }
-                dataRecvStatusBarItem.Visibility = Visibility.Visible;
-            }));
+            //this.Dispatcher.Invoke(new Action(() =>
+            //{
+            //    if (autoSendEnableCheckBox.IsChecked == false)
+            //    {
+            //        Information("");
+            //    }
+            //    dataRecvStatusBarItem.Visibility = Visibility.Visible;
+            //}));
         }
 
         #endregion

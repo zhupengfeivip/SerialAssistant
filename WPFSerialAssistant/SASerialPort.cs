@@ -24,6 +24,7 @@ namespace WPFSerialAssistant
 
         private void InitSerialPort()
         {
+            
             serialPort.DataReceived += SerialPort_DataReceived;
             InitCheckTimer();
         }

@@ -21,9 +21,21 @@ namespace WPFSerialAssistant
         public string PortName { get; set; }
 
         /// <summary>
-        /// 小票打印机
+        /// 
         /// </summary>
-        [Group(Group = "system", Comment = "小票打印机")]
-        public string NotePrinter { get; set; }
+        [Group(Group = "system", Comment = "")]
+        public string SendData1 { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [Group(Group = "system", Comment = "")]
+        public string SendData2 { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [Group(Group = "system", Comment = "")]
+        public string SendData3 { get; set; }
     }
 }

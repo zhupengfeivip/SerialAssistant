@@ -59,6 +59,9 @@
     <Reference Include="Newtonsoft.Json">
       <HintPath>lib\Json\Net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="ReadWriteIni, Version=1.2.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\ReadWriteIni.1.2.4\lib\net40\ReadWriteIni.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
@@ -82,7 +85,7 @@
     <Compile Include="About.xaml.cs">
       <DependentUpon>About.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Core.cs" />
+    <Compile Include="Config.cs" />
     <Compile Include="SAFile.cs" />
     <Compile Include="SASerialPort.cs" />
     <Compile Include="SATimer.cs" />
@@ -125,6 +128,7 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

@@ -82,7 +82,7 @@
                                     <ColumnDefinition Width="10*"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="通讯波特率"  VerticalAlignment="Center" Grid.Column="0"></TextBlock>
-                                <ComboBox Name="baudRateComboBox" Width="120" Grid.Column="1" IsEditable="True" Padding="5">
+                                    <ComboBox Name="baudRateComboBox" Width="120" Grid.Column="1" IsEditable="False" Padding="5">
                                     <ComboBoxItem>1200</ComboBoxItem>
                                     <ComboBoxItem>2400</ComboBoxItem>
                                     <ComboBoxItem>4800</ComboBoxItem>
@@ -253,8 +253,8 @@
                         <RowDefinition Height="60"></RowDefinition>
                     </Grid.RowDefinitions>
                     <GroupBox Grid.Row="0" Header="接收区" BorderBrush="{Binding ElementName=serialPortConfigPanel, Path=BorderBrush}" BorderThickness="{Binding ElementName=serialPortConfigPanel, Path=BorderThickness}">
-                        <RichTextBox Name="recvDataRichTextBox" Margin="2,5" BorderThickness="0" IsReadOnly="True">
-                            <FlowDocument LineHeight="1.5" FontSize="14" FontFamily="Lucida Console"></FlowDocument>
+                        <RichTextBox Name="recvDataRichTextBox" Margin="2" BorderThickness="0" IsReadOnly="True">
+                            <FlowDocument FontFamily="Lucida Console"></FlowDocument>
                         </RichTextBox>
                     </GroupBox>
                     <GroupBox Grid.Row="1" Header="发送区" IsEnabled="{Binding ElementName=portsComboBox, Path=IsEnabled}"  BorderBrush="{Binding ElementName=serialPortConfigPanel, Path=BorderBrush}" BorderThickness="{Binding ElementName=serialPortConfigPanel, Path=BorderThickness}">

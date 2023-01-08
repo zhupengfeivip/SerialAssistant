@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO.Ports;
 using System.Linq;
 using System.Text;
@@ -32,10 +33,23 @@ namespace WPFSerialAssistant
         /// </summary>
         private void FindPorts()
         {
-            portsComboBox.ItemsSource = SerialPort.GetPortNames();
+            string[] portList = SerialPort.GetPortNames();
+            Array.Sort(portList);
+            portsComboBox.ItemsSource = portList;
             if (portsComboBox.Items.Count > 0)
             {
-                portsComboBox.SelectedIndex = 0;
+                if (portList.Contains(Config.PortName))
+                {
+                    // 取配置文件串口号
+                    portsComboBox.SelectedValue = Config.PortName;                         
+                }
+                else
+                {
+                    // 没找到时默认选择第一个
+                    portsComboBox.SelectedIndex = 0;
+                }
+
+               
                 portsComboBox.IsEnabled = true;
                 Information(string.Format("查找到可以使用的端口{0}个。", portsComboBox.Items.Count.ToString()));
             }
@@ -225,14 +239,14 @@ namespace WPFSerialAssistant
                 {
                     string[] grp = textData.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-                    List<byte> list = new List<byte>();
+                    List<byte> sendBuff = new List<byte>();
 
                     foreach (var item in grp)
-                    {
-                        list.Add(Convert.ToByte(item, 16));
-                    }
+                        sendBuff.Add(Convert.ToByte(item, 16));
              
-                    serialPort.Write(list.ToArray(), 0, list.Count);
+                    serialPort.Write(sendBuff.ToArray(), 0, sendBuff.Count);
+                    Trace.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss:fff} 发送数据：{sendBuff.Count}");
+                    BuffAppendRichTextBox(1, sendBuff.ToArray());
                 }
 
                 if (reportEnable)

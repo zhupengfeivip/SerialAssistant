@@ -37,6 +37,7 @@ namespace WPFSerialAssistant
                         break;
                 }
             }
+            result = result.TrimEnd();
 
             return result;
         }

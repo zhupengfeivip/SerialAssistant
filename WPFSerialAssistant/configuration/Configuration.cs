@@ -15,7 +15,7 @@ namespace WPFSerialAssistant
         /// <summary>
         /// 默认的配置文件存储路径
         /// </summary>
-        private static readonly string defaultConfPath = @"Config\config.conf";
+        private static readonly string defaultConfPath = @"config.conf";
 
         /// <summary>
         /// 默认配置文件的存储编码格式
@@ -174,10 +174,10 @@ namespace WPFSerialAssistant
             string confStr = Newtonsoft.Json.JsonConvert.SerializeObject(conf.ConfigInfo);
 
             // 如果指定的配置路径不存在，则新建一个
-            if (System.IO.File.Exists(path) == false)
-            {
-                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path));
-            }
+            //if (System.IO.File.Exists(path) == false)
+            //{
+            //    System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path));
+            //}
 
             // 保存配置信息
             using (System.IO.StreamWriter sw = new System.IO.StreamWriter(path, false, defaultConfEncoding))

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -37,7 +38,7 @@ namespace WPFSerialAssistant
         /// <summary>
         /// 
         /// </summary>
-        string configPath = Environment.CurrentDirectory + "\\config.ini";
+        string configPath = Environment.CurrentDirectory + "\\config.xml";
 
         /// <summary>
         /// 
@@ -59,8 +60,8 @@ namespace WPFSerialAssistant
         /// </summary>
         private void InitCore()
         {
-            ini = new ReadWriteIni.v1.IniHelper(configPath);
-            ini.Deserialize(ref Config);
+            if (File.Exists(configPath))
+                Config = XmlHelper.XmlDeserializeFromFile<Config>(configPath);
 
             tbxSendData1.Text = Config.SendData1;
             tbxSendData2.Text = Config.SendData2;
@@ -652,7 +653,7 @@ namespace WPFSerialAssistant
             string sendText = "";
             Button btn = sender as Button;
             if (btn == null) return;
-            if(btn.Name.IndexOf("1") >= 0)
+            if (btn.Name.IndexOf("1") >= 0)
                 sendText = tbxSendData1.Text.Trim();
             else if (btn.Name.IndexOf("2") >= 0)
                 sendText = tbxSendData2.Text.Trim();
@@ -840,8 +841,8 @@ namespace WPFSerialAssistant
                     Config.PortName = portsComboBox.Text;
                     Config.SendData1 = tbxSendData1.Text.Trim();
                     Config.SendData2 = tbxSendData2.Text.Trim();
-                    Config.SendData3= tbxSendData3.Text.Trim();
-                    ini.SerializeToFile(Config);
+                    Config.SendData3 = tbxSendData3.Text.Trim();
+                    XmlHelper.XmlSerializeToFile(Config, configPath);
                 }
             }
             catch (Exception ex)

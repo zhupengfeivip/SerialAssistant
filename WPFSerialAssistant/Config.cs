@@ -17,25 +17,21 @@ namespace WPFSerialAssistant
         /// <summary>
         /// 串口号
         /// </summary>
-        [Group(Group = "system", Comment = "串口号")]
-        public string PortName { get; set; }
+        public string PortName = "COM1";
 
         /// <summary>
         /// 
         /// </summary>
-        [Group(Group = "system", Comment = "")]
-        public string SendData1 { get; set; }
+        public string SendData1 = "";
 
         /// <summary>
         /// 
         /// </summary>
-        [Group(Group = "system", Comment = "")]
-        public string SendData2 { get; set; }
+        public string SendData2 = "";
 
         /// <summary>
         /// 
         /// </summary>
-        [Group(Group = "system", Comment = "")]
-        public string SendData3 { get; set; }
+        public string SendData3 = "";
     }
 }

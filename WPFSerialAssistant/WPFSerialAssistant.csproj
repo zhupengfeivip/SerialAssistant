@@ -91,6 +91,7 @@
     <Compile Include="SATimer.cs" />
     <Compile Include="SAViewMode.cs" />
     <Compile Include="Utilities.cs" />
+    <Compile Include="utils\XmlHelper.cs" />
     <Page Include="About.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

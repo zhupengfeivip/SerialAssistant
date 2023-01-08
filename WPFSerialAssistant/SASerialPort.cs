@@ -192,6 +192,13 @@ namespace WPFSerialAssistant
         }
 
         private string appendContent = "\n";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="textData"></param>
+        /// <param name="reportEnable"></param>
+        /// <returns></returns>
         private bool SerialPortWrite(string textData, bool reportEnable)
         {
             if (serialPort == null)

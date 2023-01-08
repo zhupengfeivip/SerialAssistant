@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Windows.Controls;
+using System.Windows.Media;
 //using System.Threading.Tasks;
 
 namespace WPFSerialAssistant
@@ -13,16 +15,14 @@ namespace WPFSerialAssistant
             string result = "";
 
             if (mode == ReceiveMode.Character)
-            {
                 return encoding.GetString(bytesBuffer.ToArray<byte>());
-            }
 
             foreach (var item in bytesBuffer)
             {
                 switch (mode)
                 {
                     case ReceiveMode.Hex:
-                        result += Convert.ToString(item, 16).ToUpper() + " ";
+                        result += item.ToString("X2") + " ";
                         break;
                     case ReceiveMode.Decimal:
                         result += Convert.ToString(item, 10) + " ";
@@ -78,6 +78,9 @@ namespace WPFSerialAssistant
 
             return result.Trim();
         }
+
+
+
 
     }
 }

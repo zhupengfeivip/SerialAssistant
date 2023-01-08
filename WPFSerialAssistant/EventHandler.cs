@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace WPFSerialAssistant
 {
@@ -507,7 +508,16 @@ namespace WPFSerialAssistant
                 if (showReceiveData)
                 {
                     // 根据显示模式显示接收到的字节.
-                    recvDataRichTextBox.AppendText(Utilities.BytesToText(recvBuffer, receiveMode, serialPort.Encoding));
+                    string byteStr = Utilities.BytesToText(recvBuffer, receiveMode, serialPort.Encoding);
+                    string msg = $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff")}][接收]   {byteStr} {Environment.NewLine}";
+                    //recvDataRichTextBox.AppendText(msg);
+                    //recvDataRichTextBox.AppendText(Environment.NewLine);
+       
+                    Paragraph p = new Paragraph(new Run(msg));
+                    p.FontSize = 14;
+                    p.LineHeight = 1;
+                    p.Foreground = new SolidColorBrush(Colors.Blue);
+                    recvDataRichTextBox.Document.Blocks.Add(p);
                     recvDataRichTextBox.ScrollToEnd();
                 }
 

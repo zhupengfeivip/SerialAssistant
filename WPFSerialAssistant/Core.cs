@@ -87,6 +87,10 @@ namespace WPFSerialAssistant
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         private bool SendData()
         {
             string textToSend = sendDataTextBox.Text;

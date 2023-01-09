@@ -33,5 +33,11 @@ namespace WPFSerialAssistant
         /// 
         /// </summary>
         public string SendData3 = "";
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public List<BatchSendCmd> batchCmd = new List<BatchSendCmd>();
     }
 }

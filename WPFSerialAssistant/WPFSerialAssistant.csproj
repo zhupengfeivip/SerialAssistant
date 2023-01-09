@@ -85,6 +85,7 @@
     <Compile Include="About.xaml.cs">
       <DependentUpon>About.xaml</DependentUpon>
     </Compile>
+    <Compile Include="BatchSendCmd.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="ReceiveMode.cs" />
     <Compile Include="Utilities.cs" />

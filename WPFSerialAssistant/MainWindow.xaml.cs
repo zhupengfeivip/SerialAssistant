@@ -14,10 +14,12 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace WPFSerialAssistant
 {
@@ -665,6 +667,22 @@ namespace WPFSerialAssistant
             SendData(sendText);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void batchSendCmd_Click(object sender, RoutedEventArgs e)
+        {
+            Button btn = sender as Button;
+            if (btn == null) return;
+            BatchSendCmd sendCmd = btn.Tag as BatchSendCmd;
+            if (sendCmd == null) return;
+
+            SendData(sendCmd.sendBuff);
+        }
+
+
         private void saveRecvDataButton_Click(object sender, RoutedEventArgs e)
         {
             SaveData(GetSaveDataPath());
@@ -1049,7 +1067,6 @@ namespace WPFSerialAssistant
 
         private void InitSerialPort()
         {
-
             serialPort.DataReceived += SerialPort_DataReceived;
             InitCheckTimer();
         }
@@ -1447,11 +1464,55 @@ namespace WPFSerialAssistant
             Information("恢复原来的视图模式。");
         }
 
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (Config.batchCmd.Count == 0)
+                {
+                    Config.batchCmd.Add(new BatchSendCmd()
+                    {
+                        Name = "测试一",
+                        sendBuff = "11 22 33",
+                        delayMs = 100
+                    });
+                    Config.batchCmd.Add(new BatchSendCmd()
+                    {
+                        Name = "测试二",
+                        sendBuff = "11 22 33",
+                        delayMs = 100
+                    });
+                }
 
+                for (int i = 0; i < Config.batchCmd.Count; i++)
+                {
+                    BatchSendCmd sendCmd = Config.batchCmd[i];
 
+                    RowDefinition row1 = new RowDefinition();   //实例化一个Grid行
+                    gdBatchCmd.RowDefinitions.Add(row1);
 
+                    TextBox tbx = new TextBox();
+                    tbx.Text = sendCmd.sendBuff;
+                    tbx.Padding = new Thickness(5);
+                    gdBatchCmd.Children.Add(tbx);
+                    Grid.SetRow(tbx, i);
+                    Grid.SetColumn(tbx, 0);
 
-
+                    Button btn = new Button();
+                    btn.Content = sendCmd.Name;
+                    btn.Padding = new Thickness(5);
+                    btn.Tag = Config.batchCmd[i];
+                    btn.Click += batchSendCmd_Click;
+                    gdBatchCmd.Children.Add(btn);
+                    Grid.SetRow(btn, i);
+                    Grid.SetColumn(btn, 1);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, ex.Message);
+            }
+        }
     }
 
     public enum SendMode

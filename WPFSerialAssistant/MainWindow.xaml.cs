@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using Bonn.Helper;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -49,11 +50,6 @@ namespace WPFSerialAssistant
         /// 
         /// </summary>
         public static Config Config = new Config();
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private ReadWriteIni.v1.IniHelper ini;
 
         /// <summary>
         /// 数据接收缓冲区
@@ -141,6 +137,44 @@ namespace WPFSerialAssistant
         private bool showSendData = true;
 
         /// <summary>
+        /// SerialPort对象
+        /// </summary>
+        private SerialPort serialPort = new SerialPort();
+
+        // 需要一个定时器用来，用来保证即使缓冲区没满也能够及时将数据处理掉，防止一直没有到达
+        // 阈值，而导致数据在缓冲区中一直得不到合适的处理。
+        private DispatcherTimer checkTimer = new DispatcherTimer();
+
+        /// <summary>
+        /// 用于更新时间的定时器
+        /// </summary>
+        private DispatcherTimer clockTimer = new DispatcherTimer();
+
+        /// <summary>
+        /// 用于自动发送串口数据的定时器
+        /// </summary>
+        private DispatcherTimer autoSendDataTimer = new DispatcherTimer();
+
+        // 保存面板的显示状态
+        private Stack<Visibility> panelVisibilityStack = new Stack<Visibility>(3);
+
+        // 一个阈值，当接收的字节数大于这么多字节数之后，就将当前的buffer内容交由数据处理的线程
+        // 分析。这里存在一个问题，假如最后一次传输之后，缓冲区并没有达到阈值字节数，那么可能就
+        // 没法启动数据处理的线程将最后一次传输的数据处理了。这里应当设定某种策略来保证数据能够
+        // 在尽可能短的时间内得到处理。
+        private const int THRESH_VALUE = 128;
+
+        private bool shouldClear = true;
+
+        private string appendContent = "\n";
+
+        // 接收并显示的方式
+        private ReceiveMode receiveMode = ReceiveMode.Character;
+
+        // 发送的方式
+        private SendMode sendMode = SendMode.Character;
+
+        /// <summary>
         /// 
         /// </summary>
         /// <param name="dataType"></param>
@@ -157,10 +191,20 @@ namespace WPFSerialAssistant
                 typeStr = "发送";
                 showColor = Colors.Blue;
             }
-            else
+            else if (dataType == 2)
             {
                 typeStr = "接收";
+                showColor = Colors.Blue;
+            }
+            else if (dataType == 99)
+            {
+                typeStr = "异常";
                 showColor = Colors.Red;
+            }
+            else
+            {
+                typeStr = "普通";
+                showColor = Colors.Black;
             }
 
             Dispatcher.Invoke(new Action(() =>
@@ -179,6 +223,53 @@ namespace WPFSerialAssistant
                 dataRecvStatusBarItem.Visibility = Visibility.Collapsed;
             }));
         }
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dataType"></param>
+        /// <param name="buff"></param>
+        private void BuffAppendRichTextBox(string byteStr, byte dataType = 3)
+        {
+            string typeStr;
+            Color showColor;
+            if (dataType == 1)
+            {
+                // 发送
+                typeStr = "发送";
+                showColor = Colors.Green;
+            }
+            else if (dataType == 2)
+            {
+                typeStr = "接收";
+                showColor = Colors.Blue;
+            }
+            else if (dataType == 99)
+            {
+                typeStr = "异常";
+                showColor = Colors.Red;
+            }
+            else
+            {
+                typeStr = "普通";
+                showColor = Colors.Black;
+            }
+
+            Dispatcher.Invoke(new Action(() =>
+            {
+                // 根据显示模式显示接收到的字节.
+                string msg = $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff")}][{typeStr}]   {byteStr}{Environment.NewLine}";
+
+                Paragraph p = new Paragraph(new Run(msg));
+                p.FontSize = 14;
+                p.LineHeight = 1;
+                p.Foreground = new SolidColorBrush(showColor);
+                recvDataRichTextBox.Document.Blocks.Add(p);
+                recvDataRichTextBox.ScrollToEnd();
+            }));
+        }
+
 
         /// <summary>
         /// 
@@ -201,7 +292,6 @@ namespace WPFSerialAssistant
                 return SerialPortWrite(sendText);
             }
         }
-
         private void AutoSendData()
         {
             //bool ret = SendData();
@@ -491,14 +581,6 @@ namespace WPFSerialAssistant
         #endregion
 
 
-        #region Global
-        // 接收并显示的方式
-        private ReceiveMode receiveMode = ReceiveMode.Character;
-
-        // 发送的方式
-        private SendMode sendMode = SendMode.Character;
-
-        #endregion
 
         #region Event handler for menu items
         private void saveSerialDataMenuItem_Click(object sender, RoutedEventArgs e)
@@ -908,71 +990,6 @@ namespace WPFSerialAssistant
         #endregion
 
         #region EventHandler for serialPort
-        // 一个阈值，当接收的字节数大于这么多字节数之后，就将当前的buffer内容交由数据处理的线程
-        // 分析。这里存在一个问题，假如最后一次传输之后，缓冲区并没有达到阈值字节数，那么可能就
-        // 没法启动数据处理的线程将最后一次传输的数据处理了。这里应当设定某种策略来保证数据能够
-        // 在尽可能短的时间内得到处理。
-        private const int THRESH_VALUE = 128;
-
-        private bool shouldClear = true;
-
-        /// <summary>
-        /// 更新：采用一个缓冲区，当有数据到达时，把字节读取出来暂存到缓冲区中，缓冲区到达定值
-        /// 时，在显示区显示数据即可。
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void SerialPort_DataReceived(object sender, System.IO.Ports.SerialDataReceivedEventArgs e)
-        {
-            System.IO.Ports.SerialPort sp = sender as System.IO.Ports.SerialPort;
-
-            if (sp == null) return;
-
-            // 临时缓冲区将保存串口缓冲区的所有数据
-            int bytesToRead = sp.BytesToRead;
-            byte[] tempBuffer = new byte[bytesToRead];
-
-            Trace.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss:fff} 接收数据：{bytesToRead}");
-
-            // 将缓冲区所有字节读取出来
-            sp.Read(tempBuffer, 0, bytesToRead);
-
-            BuffAppendRichTextBox(2, tempBuffer.ToArray());
-
-            //// 检查是否需要清空全局缓冲区先
-            //if (shouldClear)
-            //{
-            //    receiveBuffer.Clear();
-            //    shouldClear = false;
-            //}
-
-            // 暂存缓冲区字节到全局缓冲区中等待处理
-            //receiveBuffer.AddRange(tempBuffer);
-
-            //if (receiveBuffer.Count >= THRESH_VALUE)
-            //{
-            //    //Dispatcher.Invoke(new Action(() =>
-            //    //{
-            //    //    recvDataRichTextBox.AppendText("Process data.\n");
-            //    //}));
-            //    // 进行数据处理，采用新的线程进行处理。
-            //    Thread dataHandler = new Thread(new ParameterizedThreadStart(ReceivedDataHandler));
-            //    dataHandler.Start(receiveBuffer);
-            //}
-
-            //// 启动定时器，防止因为一直没有到达缓冲区字节阈值，而导致接收到的数据一直留存在缓冲区中无法处理。
-            //StartCheckTimer();
-
-            //this.Dispatcher.Invoke(new Action(() =>
-            //{
-            //    if (autoSendEnableCheckBox.IsChecked == false)
-            //    {
-            //        Information("");
-            //    }
-            //    dataRecvStatusBarItem.Visibility = Visibility.Visible;
-            //}));
-        }
-
         #endregion
 
         #region 数据处理
@@ -1056,15 +1073,11 @@ namespace WPFSerialAssistant
             }
         }
 
+        #region 串口处理
+
         /// <summary>
-        /// SerialPort对象
+        /// 
         /// </summary>
-        private SerialPort serialPort = new SerialPort();
-
-        // 需要一个定时器用来，用来保证即使缓冲区没满也能够及时将数据处理掉，防止一直没有到达
-        // 阈值，而导致数据在缓冲区中一直得不到合适的处理。
-        private DispatcherTimer checkTimer = new DispatcherTimer();
-
         private void InitSerialPort()
         {
             serialPort.DataReceived += SerialPort_DataReceived;
@@ -1248,8 +1261,6 @@ namespace WPFSerialAssistant
             return false;
         }
 
-        private string appendContent = "\n";
-
         /// <summary>
         /// 
         /// </summary>
@@ -1307,6 +1318,67 @@ namespace WPFSerialAssistant
             return true;
         }
 
+        /// <summary>
+        /// 更新：采用一个缓冲区，当有数据到达时，把字节读取出来暂存到缓冲区中，缓冲区到达定值
+        /// 时，在显示区显示数据即可。
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            SerialPort sp = sender as SerialPort;
+
+            if (sp == null) return;
+
+            // 临时缓冲区将保存串口缓冲区的所有数据
+            int bytesToRead = sp.BytesToRead;
+            byte[] readBuff = new byte[bytesToRead];
+
+            Trace.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss:fff} 接收数据：{bytesToRead}");
+
+            // 将缓冲区所有字节读取出来
+            sp.Read(readBuff, 0, bytesToRead);
+
+            if(cbxAutoReply.IsChecked.Value)
+            {
+                AutoBackRule backRule = getBackBuff(readBuff);
+                if (backRule == null)
+                {
+                    BuffAppendRichTextBox(2, readBuff.ToArray());
+                    BuffAppendRichTextBox("未找到回复命令，请在配置文件中配置", 99);
+                }
+                else
+                {
+                    BuffAppendRichTextBox($"{backRule.Name},{backRule.Description},{ByteExp.ByteToHexString(readBuff.ToArray())}", 2);
+
+                    byte[] backBuff = StringExp.ToBytes(backRule.BackBuff.Replace(" ", ""));
+                    sp.Write(backBuff, 0, backBuff.Length);
+                    BuffAppendRichTextBox($"{backRule.Name},{backRule.Description},{ByteExp.ByteToHexString(backBuff.ToArray())}", 1);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="recvBuff"></param>
+        /// <returns></returns>
+        private AutoBackRule getBackBuff(byte[] recvBuff)
+        {
+            string byteStr = ByteExp.ByteToString(recvBuff);
+            byteStr = byteStr.Replace(" ", "");
+            foreach (var item in Config.AutoBackRule)
+            {
+                if (byteStr == item.RecvBuff.Replace(" ", ""))
+                {
+                    return item;
+                }
+            }
+            return null;
+        }
+
+        #endregion 串口处理
+
         #region 定时器
         /// <summary>
         /// 超时时间为50ms
@@ -1332,13 +1404,6 @@ namespace WPFSerialAssistant
             checkTimer.Stop();
         }
         #endregion
-
-
-        /// <summary>
-        /// 用于更新时间的定时器
-        /// </summary>
-        private DispatcherTimer clockTimer = new DispatcherTimer();
-
         /// <summary>
         /// 定时器初始化
         /// </summary>
@@ -1349,12 +1414,6 @@ namespace WPFSerialAssistant
             clockTimer.Tick += ClockTimer_Tick;
             clockTimer.Start();
         }
-
-        /// <summary>
-        /// 用于自动发送串口数据的定时器
-        /// </summary>
-        private DispatcherTimer autoSendDataTimer = new DispatcherTimer();
-
         private void InitAutoSendDataTimer()
         {
             autoSendDataTimer.IsEnabled = false;
@@ -1373,11 +1432,6 @@ namespace WPFSerialAssistant
             autoSendDataTimer.IsEnabled = false;
             autoSendDataTimer.Stop();
         }
-
-
-        // 保存面板的显示状态
-        private Stack<Visibility> panelVisibilityStack = new Stack<Visibility>(3);
-
         /// <summary>
         /// 判断是否处于简洁视图模式
         /// </summary>
@@ -1491,21 +1545,29 @@ namespace WPFSerialAssistant
                     RowDefinition row1 = new RowDefinition();   //实例化一个Grid行
                     gdBatchCmd.RowDefinitions.Add(row1);
 
+                    TextBlock lbl = new TextBlock();
+                    lbl.Text = i + 1 + ". ";
+                    lbl.Padding = new Thickness(2, 5, 10, 5);
+                    gdBatchCmd.Children.Add(lbl);
+                    Grid.SetRow(lbl, i);
+                    Grid.SetColumn(lbl, 0);
+
                     TextBox tbx = new TextBox();
                     tbx.Text = sendCmd.sendBuff;
-                    tbx.Padding = new Thickness(5);
+                    tbx.Padding = new Thickness(2, 5, 10, 5);
                     gdBatchCmd.Children.Add(tbx);
                     Grid.SetRow(tbx, i);
-                    Grid.SetColumn(tbx, 0);
+                    Grid.SetColumn(tbx, 1);
 
                     Button btn = new Button();
                     btn.Content = sendCmd.Name;
-                    btn.Padding = new Thickness(5);
+                    //btn.Width= 100;
+                    btn.Padding = new Thickness(10, 5, 10, 5);
                     btn.Tag = Config.batchCmd[i];
                     btn.Click += batchSendCmd_Click;
                     gdBatchCmd.Children.Add(btn);
                     Grid.SetRow(btn, i);
-                    Grid.SetColumn(btn, 1);
+                    Grid.SetColumn(btn, 2);
                 }
             }
             catch (Exception ex)

@@ -1,11 +1,4 @@
-﻿using ReadWriteIni.v1;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Xml.Linq;
+﻿using System.Collections.Generic;
 
 namespace WPFSerialAssistant
 {
@@ -39,5 +32,12 @@ namespace WPFSerialAssistant
         /// 
         /// </summary>
         public List<BatchSendCmd> batchCmd = new List<BatchSendCmd>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public List<AutoBackRule> AutoBackRule = new List<AutoBackRule>();
+
+
     }
 }

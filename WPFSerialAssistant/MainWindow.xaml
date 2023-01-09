@@ -167,6 +167,7 @@
                                                 </StackPanel>
                                             </GroupBox>
                                             <Button Name="clearSendDataTextBox" Content="清空发送区" Padding="3" Margin="10,5,10,0" Click="clearSendDataTextBox_Click"></Button>
+                                            <CheckBox x:Name="cbxAutoReply" Padding="0" Margin="10">自动应答</CheckBox>
                                         </StackPanel>
                                     </GroupBox>
                                 </Grid>
@@ -255,9 +256,13 @@
                             <TabItem Header="批量发送">
                                 <Grid Name="gdBatchCmd" Margin="0,5">
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="20"></ColumnDefinition>
                                         <ColumnDefinition Width="*"></ColumnDefinition>
                                         <ColumnDefinition Width="80"></ColumnDefinition>
                                     </Grid.ColumnDefinitions>
+                                    <!--<TextBlock Grid.Row="0" Grid.Column="0" TextAlignment="Center" Padding="5">1.</TextBlock>
+                                    <TextBox FontFamily="Lucida Console" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" Padding="5">Hello, world!</TextBox>
+                                    <Button  Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" Padding="3" Content="发送" Margin="5,0"></Button>-->
                                 </Grid>
                             </TabItem>
                             <TabItem Header="自动应答">

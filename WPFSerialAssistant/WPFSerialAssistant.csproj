@@ -86,10 +86,7 @@
       <DependentUpon>About.xaml</DependentUpon>
     </Compile>
     <Compile Include="Config.cs" />
-    <Compile Include="SAFile.cs" />
-    <Compile Include="SASerialPort.cs" />
-    <Compile Include="SATimer.cs" />
-    <Compile Include="SAViewMode.cs" />
+    <Compile Include="ReceiveMode.cs" />
     <Compile Include="Utilities.cs" />
     <Compile Include="utils\XmlHelper.cs" />
     <Page Include="About.xaml">
@@ -105,7 +102,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="configuration\Configuration.cs" />
-    <Compile Include="EventHandler.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>

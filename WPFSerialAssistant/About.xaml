@@ -5,12 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WPFSerialAssistant"
         mc:Ignorable="d" Name="AboutWindow"
-        Title="关于串口助手" Height="200" Width="350" ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
+        Title="关于串口助手" Width="350" ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
         Icon="1.ico">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="50*"/>
-            <RowDefinition Height="150*"/>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="100"/>
+            <RowDefinition Height="800*"/>
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0" Margin="5">
             <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center">
@@ -27,6 +28,18 @@
                 <TextBlock>软件作者：Christopher Lee</TextBlock>
                 <TextBlock>反馈邮箱：christopherlee1993@outlook.com</TextBlock>
                 <TextBlock>小小说明：开放源码，采用MIT协议。望共同学习进步。</TextBlock>
+            </StackPanel>
+        </Grid>
+        <Grid Grid.Row="2">
+            <StackPanel Margin="5">
+                <TextBlock Foreground="#FF0078D7" FontSize="16" Padding="5">主要功能：</TextBlock>
+                <TextBlock Padding="5">1. 可自由显示、隐藏的设置面板</TextBlock>
+                <TextBlock Padding="5">2. 简洁视图模式，专注于数据收发</TextBlock>
+                <TextBlock Padding="5">3. 软件主要配置可保存并恢复</TextBlock>
+                <TextBlock Foreground="#FF0078D7" FontSize="16" Padding="5">快捷键提示：</TextBlock>
+                <TextBlock Padding="5">1. Ctrl+S: 保存接收区数据</TextBlock>
+                <TextBlock Padding="5">2. Ctrl+Enter: 进/退简洁视图模式</TextBlock>
+                <TextBlock Padding="5">3. Enter: 发送数据</TextBlock>
             </StackPanel>
         </Grid>
     </Grid>

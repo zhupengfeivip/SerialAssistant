@@ -1,7 +1,9 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Ports;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -15,6 +17,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace WPFSerialAssistant
 {
@@ -989,5 +992,473 @@ namespace WPFSerialAssistant
             // 处理数据，比如解析指令等等
         }
         #endregion
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        private string GetSaveDataPath()
+        {
+            string path = @"data.txt";
+
+            SaveFileDialog sfd = new SaveFileDialog();
+
+            sfd.Title = "选择存储数据的路径...";
+            sfd.FileName = string.Format("数据{0}", DateTime.Now.ToString("yyyyMdHHMMss"));
+            sfd.Filter = "文本文件|*.txt";
+
+            if (sfd.ShowDialog() == true)
+            {
+                path = sfd.FileName;
+            }
+
+            return path;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="path"></param>
+        private void SaveData(string path)
+        {
+            try
+            {
+                using (System.IO.StreamWriter sr = new StreamWriter(path))
+                {
+                    string text = (new TextRange(recvDataRichTextBox.Document.ContentStart, recvDataRichTextBox.Document.ContentEnd)).Text;
+
+                    sr.Write(text);
+
+                    Information(string.Format("成功保存数据到{0}", path));
+                }
+            }
+            catch (Exception ex)
+            {
+                Alert(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// SerialPort对象
+        /// </summary>
+        private SerialPort serialPort = new SerialPort();
+
+        // 需要一个定时器用来，用来保证即使缓冲区没满也能够及时将数据处理掉，防止一直没有到达
+        // 阈值，而导致数据在缓冲区中一直得不到合适的处理。
+        private DispatcherTimer checkTimer = new DispatcherTimer();
+
+        private void InitSerialPort()
+        {
+
+            serialPort.DataReceived += SerialPort_DataReceived;
+            InitCheckTimer();
+        }
+
+        /// <summary>
+        /// 查找端口
+        /// </summary>
+        private void FindPorts()
+        {
+            string[] portList = SerialPort.GetPortNames();
+            Array.Sort(portList);
+            portsComboBox.ItemsSource = portList;
+            if (portsComboBox.Items.Count > 0)
+            {
+                if (portList.Contains(Config.PortName))
+                {
+                    // 取配置文件串口号
+                    portsComboBox.SelectedValue = Config.PortName;
+                }
+                else
+                {
+                    // 没找到时默认选择第一个
+                    portsComboBox.SelectedIndex = 0;
+                }
+
+
+                portsComboBox.IsEnabled = true;
+                Information(string.Format("查找到可以使用的端口{0}个。", portsComboBox.Items.Count.ToString()));
+            }
+            else
+            {
+                portsComboBox.IsEnabled = false;
+                Alert("Oops，没有查找到可用端口；您可以点击“查找”按钮手动查找。");
+            }
+        }
+
+        private bool OpenPort()
+        {
+            bool flag = false;
+            ConfigurePort();
+
+            try
+            {
+                serialPort.Open();
+                serialPort.DiscardInBuffer();
+                serialPort.DiscardOutBuffer();
+                Information(string.Format("成功打开端口{0}, 波特率{1}。", serialPort.PortName, serialPort.BaudRate.ToString()));
+                flag = true;
+            }
+            catch (Exception ex)
+            {
+                Alert(ex.Message);
+            }
+
+            return flag;
+        }
+
+        private bool ClosePort()
+        {
+            bool flag = false;
+
+            try
+            {
+                StopAutoSendDataTimer();
+                progressBar.Visibility = Visibility.Collapsed;
+                serialPort.Close();
+                Information(string.Format("成功关闭端口{0}。", serialPort.PortName));
+                flag = true;
+            }
+            catch (Exception ex)
+            {
+                Alert(ex.Message);
+            }
+
+            return flag;
+        }
+
+        private void ConfigurePort()
+        {
+            serialPort.PortName = GetSelectedPortName();
+            serialPort.BaudRate = GetSelectedBaudRate();
+            serialPort.Parity = GetSelectedParity();
+            serialPort.DataBits = GetSelectedDataBits();
+            serialPort.StopBits = GetSelectedStopBits();
+            serialPort.Encoding = GetSelectedEncoding();
+        }
+
+        private string GetSelectedPortName()
+        {
+            return portsComboBox.Text;
+        }
+
+        private int GetSelectedBaudRate()
+        {
+            int baudRate = 9600;
+            //string conv = baudRateComboBox.Text;
+            int.TryParse(baudRateComboBox.Text, out baudRate);
+            return baudRate;
+        }
+
+        private Parity GetSelectedParity()
+        {
+            string select = parityComboBox.Text;
+
+            Parity p = Parity.None;
+            if (select.Contains("Odd"))
+            {
+                p = Parity.Odd;
+            }
+            else if (select.Contains("Even"))
+            {
+                p = Parity.Even;
+            }
+            else if (select.Contains("Space"))
+            {
+                p = Parity.Space;
+            }
+            else if (select.Contains("Mark"))
+            {
+                p = Parity.Mark;
+            }
+
+            return p;
+        }
+
+        private int GetSelectedDataBits()
+        {
+            int dataBits = 8;
+            int.TryParse(dataBitsComboBox.Text, out dataBits);
+
+            return dataBits;
+        }
+
+        private StopBits GetSelectedStopBits()
+        {
+            StopBits stopBits = StopBits.None;
+            string select = stopBitsComboBox.Text.Trim();
+
+            if (select.Equals("1"))
+            {
+                stopBits = StopBits.One;
+            }
+            else if (select.Equals("1.5"))
+            {
+                stopBits = StopBits.OnePointFive;
+            }
+            else if (select.Equals("2"))
+            {
+                stopBits = StopBits.Two;
+            }
+
+            return stopBits;
+        }
+
+        private Encoding GetSelectedEncoding()
+        {
+            string select = encodingComboBox.Text;
+            Encoding enc = Encoding.Default;
+
+            if (select.Contains("UTF-8"))
+            {
+                enc = Encoding.UTF8;
+            }
+            else if (select.Contains("ASCII"))
+            {
+                enc = Encoding.ASCII;
+            }
+            else if (select.Contains("Unicode"))
+            {
+                enc = Encoding.Unicode;
+            }
+
+            return enc;
+        }
+
+        private bool SerialPortWrite(string textData)
+        {
+            SerialPortWrite(textData, false);
+            return false;
+        }
+
+        private string appendContent = "\n";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="textData"></param>
+        /// <param name="reportEnable"></param>
+        /// <returns></returns>
+        private bool SerialPortWrite(string textData, bool reportEnable)
+        {
+            if (serialPort == null)
+            {
+                return false;
+            }
+
+            if (serialPort.IsOpen == false)
+            {
+                Alert("串口未打开，无法发送数据。");
+                return false;
+            }
+
+            try
+            {
+                //serialPort.DiscardOutBuffer();
+                //serialPort.DiscardInBuffer();
+
+                if (sendMode == SendMode.Character)
+                {
+                    serialPort.Write(textData + appendContent);
+                }
+                else if (sendMode == SendMode.Hex)
+                {
+                    string[] grp = textData.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    List<byte> sendBuff = new List<byte>();
+
+                    foreach (var item in grp)
+                        sendBuff.Add(Convert.ToByte(item, 16));
+
+                    serialPort.Write(sendBuff.ToArray(), 0, sendBuff.Count);
+                    Trace.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss:fff} 发送数据：{sendBuff.Count}");
+                    BuffAppendRichTextBox(1, sendBuff.ToArray());
+                }
+
+                if (reportEnable)
+                {
+                    // 报告发送成功的消息，提示用户。
+                    Information(string.Format("成功发送：{0}。", textData));
+                }
+            }
+            catch (Exception ex)
+            {
+                Alert(ex.Message);
+                return false;
+            }
+
+            return true;
+        }
+
+        #region 定时器
+        /// <summary>
+        /// 超时时间为50ms
+        /// </summary>
+        private const int TIMEOUT = 50;
+        private void InitCheckTimer()
+        {
+            // 如果缓冲区中有数据，并且定时时间达到前依然没有得到处理，将会自动触发处理函数。
+            checkTimer.Interval = new TimeSpan(0, 0, 0, 0, TIMEOUT);
+            checkTimer.IsEnabled = false;
+            checkTimer.Tick += CheckTimer_Tick;
+        }
+
+        private void StartCheckTimer()
+        {
+            checkTimer.IsEnabled = true;
+            checkTimer.Start();
+        }
+
+        private void StopCheckTimer()
+        {
+            checkTimer.IsEnabled = false;
+            checkTimer.Stop();
+        }
+        #endregion
+
+
+        /// <summary>
+        /// 用于更新时间的定时器
+        /// </summary>
+        private DispatcherTimer clockTimer = new DispatcherTimer();
+
+        /// <summary>
+        /// 定时器初始化
+        /// </summary>
+        private void InitClockTimer()
+        {
+            clockTimer.Interval = new TimeSpan(0, 0, 1);
+            clockTimer.IsEnabled = true;
+            clockTimer.Tick += ClockTimer_Tick;
+            clockTimer.Start();
+        }
+
+        /// <summary>
+        /// 用于自动发送串口数据的定时器
+        /// </summary>
+        private DispatcherTimer autoSendDataTimer = new DispatcherTimer();
+
+        private void InitAutoSendDataTimer()
+        {
+            autoSendDataTimer.IsEnabled = false;
+            autoSendDataTimer.Tick += AutoSendDataTimer_Tick;
+        }
+
+        private void StartAutoSendDataTimer(int interval)
+        {
+            autoSendDataTimer.IsEnabled = true;
+            autoSendDataTimer.Interval = TimeSpan.FromMilliseconds(interval);
+            autoSendDataTimer.Start();
+        }
+
+        private void StopAutoSendDataTimer()
+        {
+            autoSendDataTimer.IsEnabled = false;
+            autoSendDataTimer.Stop();
+        }
+
+
+        // 保存面板的显示状态
+        private Stack<Visibility> panelVisibilityStack = new Stack<Visibility>(3);
+
+        /// <summary>
+        /// 判断是否处于简洁视图模式
+        /// </summary>
+        /// <returns></returns>
+        private bool IsCompactViewMode()
+        {
+            if (autoSendConfigPanel.Visibility == Visibility.Collapsed &&
+                serialCommunicationConfigPanel.Visibility == Visibility.Collapsed &&
+                autoSendConfigPanel.Visibility == Visibility.Collapsed)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 进入简洁视图模式
+        /// </summary>
+        private void EnterCompactViewMode()
+        {
+            // 首先需要保持panel的显示状态
+            panelVisibilityStack.Push(serialPortConfigPanel.Visibility);
+            panelVisibilityStack.Push(autoSendConfigPanel.Visibility);
+            panelVisibilityStack.Push(serialCommunicationConfigPanel.Visibility);
+
+            // 进入简洁视图模式
+            serialPortConfigPanel.Visibility = Visibility.Collapsed;
+            autoSendConfigPanel.Visibility = Visibility.Collapsed;
+            serialCommunicationConfigPanel.Visibility = Visibility.Collapsed;
+
+            // 把对应的菜单项取消选中
+            serialSettingViewMenuItem.IsChecked = false;
+            autoSendDataSettingViewMenuItem.IsChecked = false;
+            serialCommunicationSettingViewMenuItem.IsChecked = false;
+
+            // 此时无法视图模式，必须恢复到原先的视图模式才可以
+            serialSettingViewMenuItem.IsEnabled = false;
+            autoSendDataSettingViewMenuItem.IsEnabled = false;
+            serialCommunicationSettingViewMenuItem.IsEnabled = false;
+
+            // 切换至简洁视图模式，菜单项选中
+            compactViewMenuItem.IsChecked = true;
+
+            // 
+            Information("进入简洁视图模式。");
+        }
+
+        /// <summary>
+        /// 恢复到原来的视图模式
+        /// </summary>
+        private void RestoreViewMode()
+        {
+            // 恢复面板显示状态
+            serialCommunicationConfigPanel.Visibility = panelVisibilityStack.Pop();
+            autoSendConfigPanel.Visibility = panelVisibilityStack.Pop();
+            serialPortConfigPanel.Visibility = panelVisibilityStack.Pop();
+
+            // 恢复菜单选中状态
+            if (serialPortConfigPanel.Visibility == Visibility.Visible)
+            {
+                serialSettingViewMenuItem.IsChecked = true;
+            }
+
+            if (autoSendConfigPanel.Visibility == Visibility.Visible)
+            {
+                autoSendDataSettingViewMenuItem.IsChecked = true;
+            }
+
+            if (serialCommunicationConfigPanel.Visibility == Visibility.Visible)
+            {
+                serialCommunicationSettingViewMenuItem.IsChecked = true;
+            }
+
+            serialSettingViewMenuItem.IsEnabled = true;
+            autoSendDataSettingViewMenuItem.IsEnabled = true;
+            serialCommunicationSettingViewMenuItem.IsEnabled = true;
+
+            compactViewMenuItem.IsChecked = false;
+
+            // 
+            Information("恢复原来的视图模式。");
+        }
+
+
+
+
+
+
     }
+
+    public enum SendMode
+    {
+        Character,  //字符
+        Hex         //十六进制
+    }
+
+
 }

@@ -57,6 +57,11 @@ namespace WPFSerialAssistant
         private List<byte> receiveBuffer = new List<byte>();
 
         /// <summary>
+        /// 自动回复
+        /// </summary>
+        private bool autoReply = false;
+
+        /// <summary>
         /// 核心初始化
         /// </summary>
         private void InitCore()
@@ -396,7 +401,6 @@ namespace WPFSerialAssistant
             // 面板显示状态
             config.Add("serialPortConfigPanelVisible", serialPortConfigPanel.Visibility == Visibility.Visible);
             config.Add("autoSendConfigPanelVisible", autoSendConfigPanel.Visibility == Visibility.Visible);
-            config.Add("serialCommunicationConfigPanelVisible", serialCommunicationConfigPanel.Visibility == Visibility.Visible);
 
             // 保存接收模式
             config.Add("receiveMode", receiveMode);
@@ -503,40 +507,8 @@ namespace WPFSerialAssistant
                 autoSendConfigPanel.Visibility = Visibility.Collapsed;
             }
 
-            if (config.GetBool("serialCommunicationConfigPanelVisible"))
-            {
-                serialCommunicationSettingViewMenuItem.IsChecked = true;
-                serialCommunicationConfigPanel.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                serialCommunicationSettingViewMenuItem.IsChecked = false;
-                serialCommunicationConfigPanel.Visibility = Visibility.Collapsed;
-            }
-
             // 加载接收模式
-            receiveMode = (ReceiveMode)config.GetInt("receiveMode");
-
-            switch (receiveMode)
-            {
-                case ReceiveMode.Character:
-                    recvCharacterRadioButton.IsChecked = true;
-                    break;
-                case ReceiveMode.Hex:
-                    recvHexRadioButton.IsChecked = true;
-                    break;
-                case ReceiveMode.Decimal:
-                    recvDecRadioButton.IsChecked = true;
-                    break;
-                case ReceiveMode.Octal:
-                    recvOctRadioButton.IsChecked = true;
-                    break;
-                case ReceiveMode.Binary:
-                    recvBinRadioButton.IsChecked = true;
-                    break;
-                default:
-                    break;
-            }
+            cbxRcvShowType.SelectedIndex = config.GetInt("receiveMode");
 
             showReceiveData = config.GetBool("showReceiveData");
             showRecvDataCheckBox.IsChecked = showReceiveData;
@@ -656,15 +628,12 @@ namespace WPFSerialAssistant
 
             if (state == false)
             {
-                serialCommunicationConfigPanel.Visibility = Visibility.Visible;
             }
             else
             {
-                serialCommunicationConfigPanel.Visibility = Visibility.Collapsed;
 
                 if (IsCompactViewMode())
                 {
-                    serialCommunicationConfigPanel.Visibility = Visibility.Visible;
                     EnterCompactViewMode();
                 }
             }
@@ -1339,7 +1308,7 @@ namespace WPFSerialAssistant
             // 将缓冲区所有字节读取出来
             sp.Read(readBuff, 0, bytesToRead);
 
-            if(cbxAutoReply.IsChecked.Value)
+            if (autoReply)
             {
                 AutoBackRule backRule = getBackBuff(readBuff);
                 if (backRule == null)
@@ -1355,6 +1324,10 @@ namespace WPFSerialAssistant
                     sp.Write(backBuff, 0, backBuff.Length);
                     BuffAppendRichTextBox($"{backRule.Name},{backRule.Description},{ByteExp.ByteToHexString(backBuff.ToArray())}", 1);
                 }
+            }
+            else
+            {
+                BuffAppendRichTextBox(2, readBuff.ToArray());
             }
         }
 
@@ -1439,7 +1412,6 @@ namespace WPFSerialAssistant
         private bool IsCompactViewMode()
         {
             if (autoSendConfigPanel.Visibility == Visibility.Collapsed &&
-                serialCommunicationConfigPanel.Visibility == Visibility.Collapsed &&
                 autoSendConfigPanel.Visibility == Visibility.Collapsed)
             {
                 return true;
@@ -1458,12 +1430,10 @@ namespace WPFSerialAssistant
             // 首先需要保持panel的显示状态
             panelVisibilityStack.Push(serialPortConfigPanel.Visibility);
             panelVisibilityStack.Push(autoSendConfigPanel.Visibility);
-            panelVisibilityStack.Push(serialCommunicationConfigPanel.Visibility);
 
             // 进入简洁视图模式
             serialPortConfigPanel.Visibility = Visibility.Collapsed;
             autoSendConfigPanel.Visibility = Visibility.Collapsed;
-            serialCommunicationConfigPanel.Visibility = Visibility.Collapsed;
 
             // 把对应的菜单项取消选中
             serialSettingViewMenuItem.IsChecked = false;
@@ -1488,7 +1458,6 @@ namespace WPFSerialAssistant
         private void RestoreViewMode()
         {
             // 恢复面板显示状态
-            serialCommunicationConfigPanel.Visibility = panelVisibilityStack.Pop();
             autoSendConfigPanel.Visibility = panelVisibilityStack.Pop();
             serialPortConfigPanel.Visibility = panelVisibilityStack.Pop();
 
@@ -1501,11 +1470,6 @@ namespace WPFSerialAssistant
             if (autoSendConfigPanel.Visibility == Visibility.Visible)
             {
                 autoSendDataSettingViewMenuItem.IsChecked = true;
-            }
-
-            if (serialCommunicationConfigPanel.Visibility == Visibility.Visible)
-            {
-                serialCommunicationSettingViewMenuItem.IsChecked = true;
             }
 
             serialSettingViewMenuItem.IsEnabled = true;
@@ -1573,6 +1537,55 @@ namespace WPFSerialAssistant
             catch (Exception ex)
             {
                 MessageBox.Show(this, ex.Message);
+            }
+        }
+
+        private void showRecvDataCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void showRecvDataCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void cbxAutoReply_Unchecked(object sender, RoutedEventArgs e)
+        {
+            autoReply = false;
+        }
+
+        private void cbxAutoReply_Checked(object sender, RoutedEventArgs e)
+        {
+            autoReply = true;
+        }
+
+        private void cbxRcvShowType_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            switch (cbxRcvShowType.SelectedIndex)
+            {
+                case 0:
+                    receiveMode = ReceiveMode.Character;
+                    Information("提示：字符显示模式。");
+                    break;
+                case 1:
+                    receiveMode = ReceiveMode.Hex;
+                    Information("提示：十六进制显示模式。");
+                    break;
+                case 2:
+                    receiveMode = ReceiveMode.Decimal;
+                    Information("提示：十进制显示模式。");
+                    break;
+                case 3:
+                    receiveMode = ReceiveMode.Octal;
+                    Information("提示：八进制显示模式。");
+                    break;
+                case 4:
+                    receiveMode = ReceiveMode.Binary;
+                    Information("提示：二进制显示模式。");
+                    break;
+                default:
+                    break;
             }
         }
     }

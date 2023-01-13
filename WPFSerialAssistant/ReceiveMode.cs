@@ -8,10 +8,29 @@ namespace WPFSerialAssistant
 {
     public enum ReceiveMode
     {
-        Character,  //字符显示
-        Hex,        //十六进制
-        Decimal,    //十进制
-        Octal,      //八进制
-        Binary      //二进制
+        /// <summary>
+        /// 字符显示
+        /// </summary>
+        Character = 0,
+
+        /// <summary>
+        /// 十六进制
+        /// </summary>
+        Hex = 1,
+
+        /// <summary>
+        /// 十进制
+        /// </summary>
+        Decimal = 2,
+
+        /// <summary>
+        /// 八进制
+        /// </summary>
+        Octal = 3,
+
+        /// <summary>
+        /// 二进制
+        /// </summary>
+        Binary = 4
     }
 }

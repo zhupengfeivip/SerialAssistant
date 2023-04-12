@@ -35,6 +35,7 @@ namespace WPFSerialAssistant
             InitCore();
         }
 
+        #region 变量私有方法
 
         /// <summary>
         /// 
@@ -67,7 +68,38 @@ namespace WPFSerialAssistant
         private void InitCore()
         {
             if (File.Exists(configPath))
+            {
+                // 配置文件存在
                 Config = XmlHelper.XmlDeserializeFromFile<Config>(configPath);
+            }
+            else
+            {
+                // 配置不文件存在
+                XmlHelper.XmlSerializeToFile(Config, configPath);
+            }
+
+            if (Config.FoupCmd.Count == 0)
+            {
+                Config.FoupCmd.Add(new BatchSendCmd() { Name = "读取版本信息", sendBuff = "GET:LIOI;" });
+
+                Config.FoupCmd.Add(new BatchSendCmd() { Name = "MOVEORGN", sendBuff = "MOV:ORGN;" });
+            }
+
+            if (Config.batchCmd.Count == 0)
+            {
+                Config.batchCmd.Add(new BatchSendCmd()
+                {
+                    Name = "测试一",
+                    sendBuff = "11 22 33",
+                    delayMs = 100
+                });
+                Config.batchCmd.Add(new BatchSendCmd()
+                {
+                    Name = "测试二",
+                    sendBuff = "11 22 33",
+                    delayMs = 100
+                });
+            }
 
             tbxSendData1.Text = Config.SendData1;
             tbxSendData2.Text = Config.SendData2;
@@ -554,7 +586,85 @@ namespace WPFSerialAssistant
         }
         #endregion
 
+        #endregion 变量私有方法
+
         #region 按钮事件
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // 动态生成按钮
+                for (int i = 0; i < Config.batchCmd.Count; i++)
+                {
+                    BatchSendCmd sendCmd = Config.batchCmd[i];
+
+                    RowDefinition row1 = new RowDefinition();   //实例化一个Grid行
+                    gdBatchCmd.RowDefinitions.Add(row1);
+
+                    TextBlock lbl = new TextBlock();
+                    lbl.Text = i + 1 + ". ";
+                    lbl.Padding = new Thickness(2, 5, 10, 5);
+                    gdBatchCmd.Children.Add(lbl);
+                    Grid.SetRow(lbl, i);
+                    Grid.SetColumn(lbl, 0);
+
+                    TextBox tbx = new TextBox();
+                    tbx.Text = sendCmd.sendBuff;
+                    tbx.Padding = new Thickness(2, 5, 10, 5);
+                    gdBatchCmd.Children.Add(tbx);
+                    Grid.SetRow(tbx, i);
+                    Grid.SetColumn(tbx, 1);
+
+                    Button btn = new Button();
+                    btn.Content = sendCmd.Name;
+                    //btn.Width= 100;
+                    btn.Padding = new Thickness(10, 5, 10, 5);
+                    btn.Tag = Config.batchCmd[i];
+                    btn.Click += batchSendCmd_Click;
+                    gdBatchCmd.Children.Add(btn);
+                    Grid.SetRow(btn, i);
+                    Grid.SetColumn(btn, 2);
+                }
+
+                for (int i = 0; i < Config.FoupCmd.Count; i++)
+                {
+                    BatchSendCmd sendCmd = Config.FoupCmd[i];
+
+                    RowDefinition row1 = new RowDefinition();   //实例化一个Grid行
+                    gdFoupTestCmd.RowDefinitions.Add(row1);
+
+                    TextBlock lbl = new TextBlock();
+                    lbl.Text = i + 1 + ". ";
+                    lbl.Padding = new Thickness(2, 5, 10, 5);
+                    gdFoupTestCmd.Children.Add(lbl);
+                    Grid.SetRow(lbl, i);
+                    Grid.SetColumn(lbl, 0);
+
+                    TextBox tbx = new TextBox();
+                    tbx.Text = sendCmd.sendBuff;
+                    tbx.Padding = new Thickness(2, 5, 10, 5);
+                    gdFoupTestCmd.Children.Add(tbx);
+                    Grid.SetRow(tbx, i);
+                    Grid.SetColumn(tbx, 1);
+
+                    Button btn = new Button();
+                    btn.Content = sendCmd.Name;
+                    //btn.Width= 100;
+                    btn.Padding = new Thickness(10, 5, 10, 5);
+                    btn.Tag = Config.FoupCmd[i];
+                    btn.Click += sendFoupCmd_Click;
+                    gdFoupTestCmd.Children.Add(btn);
+                    Grid.SetRow(btn, i);
+                    Grid.SetColumn(btn, 2);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, ex.Message);
+            }
+        }
+
         private void saveSerialDataMenuItem_Click(object sender, RoutedEventArgs e)
         {
 
@@ -728,6 +838,17 @@ namespace WPFSerialAssistant
             if (sendCmd == null) return;
 
             SerialPortWrite(sendCmd);
+        }
+
+        private void sendFoupCmd_Click(object sender, RoutedEventArgs e)
+        {
+            Button btn = sender as Button;
+            if (btn == null) return;
+            BatchSendCmd sendCmd = btn.Tag as BatchSendCmd;
+            if (sendCmd == null) return;
+
+            byte[] newCmd = new FoupHelper().GetCmdBuff(sendCmd.sendBuff);
+            SerialPortWrite(newCmd);
         }
 
 
@@ -1296,6 +1417,36 @@ namespace WPFSerialAssistant
             return true;
         }
 
+        private bool SerialPortWrite(byte[] sendData)
+        {
+            if (serialPort == null) return false;
+
+            if (sendData.Length == 0)
+            {
+                Alert("要发送的内容不能为空！");
+                return false;
+            }
+            if (serialPort.IsOpen == false)
+            {
+                Alert("串口未打开，无法发送数据。");
+                return false;
+            }
+
+            try
+            {
+                serialPort.Write(sendData, 0, sendData.Length);
+                Trace.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss:fff} 发送数据：{sendData}");
+                LogSend(sendData);
+            }
+            catch (Exception ex)
+            {
+                Alert(ex.Message);
+                return false;
+            }
+
+            return true;
+        }
+
         /// <summary>
         /// 更新：采用一个缓冲区，当有数据到达时，把字节读取出来暂存到缓冲区中，缓冲区到达定值
         /// 时，在显示区显示数据即可。
@@ -1489,65 +1640,6 @@ namespace WPFSerialAssistant
 
             // 
             Information("恢复原来的视图模式");
-        }
-
-        private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                if (Config.batchCmd.Count == 0)
-                {
-                    Config.batchCmd.Add(new BatchSendCmd()
-                    {
-                        Name = "测试一",
-                        sendBuff = "11 22 33",
-                        delayMs = 100
-                    });
-                    Config.batchCmd.Add(new BatchSendCmd()
-                    {
-                        Name = "测试二",
-                        sendBuff = "11 22 33",
-                        delayMs = 100
-                    });
-                }
-
-                // 动态生成按钮
-                for (int i = 0; i < Config.batchCmd.Count; i++)
-                {
-                    BatchSendCmd sendCmd = Config.batchCmd[i];
-
-                    RowDefinition row1 = new RowDefinition();   //实例化一个Grid行
-                    gdBatchCmd.RowDefinitions.Add(row1);
-
-                    TextBlock lbl = new TextBlock();
-                    lbl.Text = i + 1 + ". ";
-                    lbl.Padding = new Thickness(2, 5, 10, 5);
-                    gdBatchCmd.Children.Add(lbl);
-                    Grid.SetRow(lbl, i);
-                    Grid.SetColumn(lbl, 0);
-
-                    TextBox tbx = new TextBox();
-                    tbx.Text = sendCmd.sendBuff;
-                    tbx.Padding = new Thickness(2, 5, 10, 5);
-                    gdBatchCmd.Children.Add(tbx);
-                    Grid.SetRow(tbx, i);
-                    Grid.SetColumn(tbx, 1);
-
-                    Button btn = new Button();
-                    btn.Content = sendCmd.Name;
-                    //btn.Width= 100;
-                    btn.Padding = new Thickness(10, 5, 10, 5);
-                    btn.Tag = Config.batchCmd[i];
-                    btn.Click += batchSendCmd_Click;
-                    gdBatchCmd.Children.Add(btn);
-                    Grid.SetRow(btn, i);
-                    Grid.SetColumn(btn, 2);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(this, ex.Message);
-            }
         }
 
         private void showRecvDataCheckBox_Checked(object sender, RoutedEventArgs e)

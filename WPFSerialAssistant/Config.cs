@@ -34,6 +34,11 @@ namespace WPFSerialAssistant
         public List<BatchSendCmd> batchCmd = new List<BatchSendCmd>();
 
         /// <summary>
+        /// foup命令列表
+        /// </summary>
+        public List<BatchSendCmd> FoupCmd = new List<BatchSendCmd>();
+
+        /// <summary>
         /// 
         /// </summary>
         public List<AutoBackRule> AutoBackRule = new List<AutoBackRule>();

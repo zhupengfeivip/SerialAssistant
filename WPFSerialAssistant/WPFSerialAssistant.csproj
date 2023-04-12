@@ -108,6 +108,7 @@
     <Compile Include="BatchSendCmd.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="ReceiveMode.cs" />
+    <Compile Include="SendMode.cs" />
     <Compile Include="Utilities.cs" />
     <Compile Include="utils\XmlHelper.cs" />
     <Page Include="About.xaml">

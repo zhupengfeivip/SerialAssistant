@@ -11,9 +11,25 @@ namespace WPFSerialAssistant
     /// </summary>
     public class BatchSendCmd
     {
+        /// <summary>
+        /// 
+        /// </summary>
         public string Name;
 
+        /// <summary>
+        /// 
+        /// </summary>
         public string sendBuff;
+
+        /// <summary>
+        /// 指令类型 
+        /// </summary>
+        public int dataType = 1;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string endType = "none";
 
         /// <summary>
         /// 延迟时间

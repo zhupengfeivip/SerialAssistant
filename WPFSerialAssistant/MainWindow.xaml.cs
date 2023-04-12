@@ -173,14 +173,18 @@ namespace WPFSerialAssistant
 
         private string appendContent = "\n";
 
-        // 接收并显示的方式
+        /// <summary>
+        /// 接收并显示的方式
+        /// </summary>
         private ReceiveMode receiveMode = ReceiveMode.Character;
 
-        // 发送的方式
+        /// <summary>
+        /// 发送的方式
+        /// </summary>
         private SendMode sendMode = SendMode.Character;
 
         /// <summary>
-        /// 
+        /// 记录日志
         /// </summary>
         /// <param name="dataType"></param>
         /// <param name="buff"></param>
@@ -229,6 +233,26 @@ namespace WPFSerialAssistant
             }));
         }
 
+        private void LogSend(string byteStr)
+        {
+            BuffAppendRichTextBox(byteStr, 1);
+        }
+
+        private void LogSend(byte[] bytes)
+        {
+            string byteStr = Utilities.BytesToText(bytes.ToList(), receiveMode, serialPort.Encoding);
+            BuffAppendRichTextBox(byteStr, 1);
+        }
+
+        private void LogRecv(string byteStr)
+        {
+            BuffAppendRichTextBox(byteStr, 2);
+        }
+
+        private void LogError(string byteStr)
+        {
+            BuffAppendRichTextBox(byteStr, 99);
+        }
 
         /// <summary>
         /// 
@@ -275,28 +299,6 @@ namespace WPFSerialAssistant
             }));
         }
 
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        private bool SendData(string sendText)
-        {
-            if (string.IsNullOrEmpty(sendText))
-            {
-                Alert("要发送的内容不能为空！");
-                return false;
-            }
-
-            if (autoSendEnableCheckBox.IsChecked == true)
-            {
-                return SerialPortWrite(sendText, false);
-            }
-            else
-            {
-                return SerialPortWrite(sendText);
-            }
-        }
         private void AutoSendData()
         {
             //bool ret = SendData();
@@ -385,7 +387,7 @@ namespace WPFSerialAssistant
             config.Add("encoding", encodingComboBox.SelectedIndex);
 
             // 保存发送区文本内容
-            config.Add("sendDataTextBoxText", tbxSendData1.Text);
+            // config.Add("sendDataTextBoxText", tbxSendData1.Text);
 
             // 自动发送时间间隔
             config.Add("autoSendDataInterval", autoSendIntervalTextBox.Text);
@@ -552,9 +554,7 @@ namespace WPFSerialAssistant
         }
         #endregion
 
-
-
-        #region Event handler for menu items
+        #region 按钮事件
         private void saveSerialDataMenuItem_Click(object sender, RoutedEventArgs e)
         {
 
@@ -663,9 +663,6 @@ namespace WPFSerialAssistant
         {
 
         }
-        #endregion
-
-        #region 按钮事件
 
         private void openClosePortButton_Click(object sender, RoutedEventArgs e)
         {
@@ -694,7 +691,7 @@ namespace WPFSerialAssistant
         {
             if (autoSendEnableCheckBox.IsChecked == true)
             {
-                Information(string.Format("使能串口自动发送功能，发送间隔：{0} {1}。", autoSendIntervalTextBox.Text, timeUnitComboBox.Text.Trim()));
+                Information($"使能串口自动发送功能，发送间隔：{autoSendIntervalTextBox.Text} {timeUnitComboBox.Text.Trim()}。");
             }
             else
             {
@@ -715,11 +712,11 @@ namespace WPFSerialAssistant
                 sendText = tbxSendData2.Text.Trim();
             else if (btn.Name.IndexOf("3") >= 0)
                 sendText = tbxSendData3.Text.Trim();
-            SendData(sendText);
+            SerialPortWrite(sendText, sendMode);
         }
 
         /// <summary>
-        /// 
+        /// 自定义指令发送
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -730,7 +727,7 @@ namespace WPFSerialAssistant
             BatchSendCmd sendCmd = btn.Tag as BatchSendCmd;
             if (sendCmd == null) return;
 
-            SendData(sendCmd.sendBuff);
+            SerialPortWrite(sendCmd);
         }
 
 
@@ -843,28 +840,38 @@ namespace WPFSerialAssistant
         private void appendRadioButton_Click(object sender, RoutedEventArgs e)
         {
             RadioButton rb = sender as RadioButton;
-            if (rb != null)
-            {
-                switch (rb.Tag.ToString())
-                {
-                    case "none":
-                        appendContent = "";
-                        break;
-                    case "return":
-                        appendContent = "\r";
-                        break;
-                    case "newline":
-                        appendContent = "\n";
-                        break;
-                    case "retnewline":
-                        appendContent = "\r\n";
-                        break;
-                    default:
-                        break;
-                }
-                Information("发送追加：" + rb.Content.ToString());
-            }
+            if (rb == null) return;
+
+            appendContent = GetAppend(rb.Tag.ToString());
+            Information("发送追加：" + rb.Content);
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        private string GetAppend(string type)
+        {
+            switch (type)
+            {
+                case "return":
+                    appendContent = "\r";
+                    break;
+                case "newline":
+                    appendContent = "\n";
+                    break;
+                case "retnewline":
+                    appendContent = "\r\n";
+                    break;
+                case "none":
+                default:
+                    appendContent = "";
+                    break;
+            }
+            return appendContent;
+        }
+
         #endregion
 
         #region Event handler for timers
@@ -914,6 +921,9 @@ namespace WPFSerialAssistant
                     Config.SendData1 = tbxSendData1.Text.Trim();
                     Config.SendData2 = tbxSendData2.Text.Trim();
                     Config.SendData3 = tbxSendData3.Text.Trim();
+
+
+
                     XmlHelper.XmlSerializeToFile(Config, configPath);
                 }
             }
@@ -956,9 +966,6 @@ namespace WPFSerialAssistant
             }
         }
 
-        #endregion
-
-        #region EventHandler for serialPort
         #endregion
 
         #region 数据处理
@@ -1224,25 +1231,27 @@ namespace WPFSerialAssistant
             return enc;
         }
 
-        private bool SerialPortWrite(string textData)
+        private bool SerialPortWrite(BatchSendCmd cmdDto)
         {
-            SerialPortWrite(textData, false);
-            return false;
+            string newCmd = cmdDto.sendBuff + GetAppend(cmdDto.endType);
+            return SerialPortWrite(newCmd, (SendMode)cmdDto.dataType);
         }
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="textData"></param>
-        /// <param name="reportEnable"></param>
+        /// <param name="sendMode"></param>
         /// <returns></returns>
-        private bool SerialPortWrite(string textData, bool reportEnable)
+        private bool SerialPortWrite(string textData, SendMode sendMode)
         {
-            if (serialPort == null)
+            if (serialPort == null) return false;
+
+            if (string.IsNullOrEmpty(textData))
             {
+                Alert("要发送的内容不能为空！");
                 return false;
             }
-
             if (serialPort.IsOpen == false)
             {
                 Alert("串口未打开，无法发送数据。");
@@ -1256,7 +1265,10 @@ namespace WPFSerialAssistant
 
                 if (sendMode == SendMode.Character)
                 {
-                    serialPort.Write(textData + appendContent);
+                    string sendMsg = textData + appendContent;
+                    serialPort.Write(sendMsg);
+
+                    LogSend(sendMsg);
                 }
                 else if (sendMode == SendMode.Hex)
                 {
@@ -1269,14 +1281,11 @@ namespace WPFSerialAssistant
 
                     serialPort.Write(sendBuff.ToArray(), 0, sendBuff.Count);
                     Trace.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss:fff} 发送数据：{sendBuff.Count}");
-                    BuffAppendRichTextBox(1, sendBuff.ToArray());
+                    LogSend(sendBuff.ToArray());
                 }
 
-                if (reportEnable)
-                {
-                    // 报告发送成功的消息，提示用户。
-                    Information(string.Format("成功发送：{0}。", textData));
-                }
+                // 报告发送成功的消息，提示用户。
+                Information($"成功发送：{textData}");
             }
             catch (Exception ex)
             {
@@ -1377,6 +1386,7 @@ namespace WPFSerialAssistant
             checkTimer.Stop();
         }
         #endregion
+
         /// <summary>
         /// 定时器初始化
         /// </summary>
@@ -1411,8 +1421,7 @@ namespace WPFSerialAssistant
         /// <returns></returns>
         private bool IsCompactViewMode()
         {
-            if (autoSendConfigPanel.Visibility == Visibility.Collapsed &&
-                autoSendConfigPanel.Visibility == Visibility.Collapsed)
+            if (autoSendConfigPanel.Visibility == Visibility.Collapsed && autoSendConfigPanel.Visibility == Visibility.Collapsed)
             {
                 return true;
             }
@@ -1449,7 +1458,7 @@ namespace WPFSerialAssistant
             compactViewMenuItem.IsChecked = true;
 
             // 
-            Information("进入简洁视图模式。");
+            Information("进入简洁视图模式");
         }
 
         /// <summary>
@@ -1479,7 +1488,7 @@ namespace WPFSerialAssistant
             compactViewMenuItem.IsChecked = false;
 
             // 
-            Information("恢复原来的视图模式。");
+            Information("恢复原来的视图模式");
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -1502,6 +1511,7 @@ namespace WPFSerialAssistant
                     });
                 }
 
+                // 动态生成按钮
                 for (int i = 0; i < Config.batchCmd.Count; i++)
                 {
                     BatchSendCmd sendCmd = Config.batchCmd[i];
@@ -1590,11 +1600,6 @@ namespace WPFSerialAssistant
         }
     }
 
-    public enum SendMode
-    {
-        Character,  //字符
-        Hex         //十六进制
-    }
 
 
 }

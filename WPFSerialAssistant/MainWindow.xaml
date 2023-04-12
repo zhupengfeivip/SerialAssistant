@@ -83,7 +83,7 @@
                                         <ColumnDefinition Width="10*"></ColumnDefinition>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="通讯波特率"  VerticalAlignment="Center" Grid.Column="0" HorizontalAlignment="Right"  Padding="0,0,5,0"></TextBlock>
-                                    <ComboBox Name="baudRateComboBox" Width="120" Grid.Column="1" IsEditable="False" Padding="5">
+                                    <ComboBox Name="baudRateComboBox" Width="120" Grid.Column="1" IsEditable="True" Padding="5">
                                         <ComboBoxItem>1200</ComboBoxItem>
                                         <ComboBoxItem>2400</ComboBoxItem>
                                         <ComboBoxItem>4800</ComboBoxItem>
@@ -91,6 +91,7 @@
                                         <ComboBoxItem>19200</ComboBoxItem>
                                         <ComboBoxItem>38400</ComboBoxItem>
                                         <ComboBoxItem>115200</ComboBoxItem>
+                                        <ComboBoxItem>614400</ComboBoxItem>
                                     </ComboBox>
                                 </Grid>
                                 <!--奇偶校验位-->
@@ -234,7 +235,7 @@
                                     </Grid>
                                 </GroupBox>
                             </TabItem>
-                            <TabItem Header="批量发送">
+                            <TabItem Header="自定义指令">
                                 <Grid Name="gdBatchCmd" Margin="0,5">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="20"></ColumnDefinition>
@@ -258,7 +259,7 @@
                     </ScrollViewer>
                 </Grid>
                 <Grid Margin="5">
-                    <GroupBox Grid.Row="0" Header="接收区" BorderBrush="{Binding ElementName=serialPortConfigPanel, Path=BorderBrush}" BorderThickness="{Binding ElementName=serialPortConfigPanel, Path=BorderThickness}">
+                    <GroupBox Grid.Row="0" Header="通讯日志" BorderBrush="{Binding ElementName=serialPortConfigPanel, Path=BorderBrush}" BorderThickness="{Binding ElementName=serialPortConfigPanel, Path=BorderThickness}">
                         <RichTextBox Name="recvDataRichTextBox" Margin="2" BorderThickness="0" IsReadOnly="True">
                             <FlowDocument FontFamily="Lucida Console"></FlowDocument>
                         </RichTextBox>

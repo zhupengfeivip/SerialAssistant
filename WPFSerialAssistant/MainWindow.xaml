@@ -269,6 +269,12 @@
                                         <ColumnDefinition Width="16*"/>
                                         <ColumnDefinition Width="27*"/>
                                     </Grid.ColumnDefinitions>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Grid.Column="0" TextAlignment="Center" Padding="5">速度</TextBlock>
+                                        <TextBox Text="1000" Grid.Column="1" Margin="10,0" Padding="5" Width="100" ToolTip="自动发送时间只有在启动自动发送前修改有效；发送过程中修改时间只会在下一次启动自动发送时生效。"></TextBox>
+                                        <Button Content="SwitchOn" />
+                                        <Button Content="SwitchOff" />
+                                    </StackPanel>
                                 </Grid>
                             </TabItem>
                         </TabControl>

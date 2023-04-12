@@ -110,6 +110,7 @@
     <Compile Include="FoupHelper.cs" />
     <Compile Include="ReceiveMode.cs" />
     <Compile Include="SendMode.cs" />
+    <Compile Include="SpindleHelper.cs" />
     <Compile Include="Utilities.cs" />
     <Compile Include="utils\XmlHelper.cs" />
     <Page Include="About.xaml">

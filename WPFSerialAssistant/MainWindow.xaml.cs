@@ -11,6 +11,7 @@ using System.Threading;
 //using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -20,7 +21,9 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using NLog;
 using static System.Net.Mime.MediaTypeNames;
+using NLog.Fluent;
 
 namespace WPFSerialAssistant
 {
@@ -32,7 +35,6 @@ namespace WPFSerialAssistant
         public MainWindow()
         {
             InitializeComponent();
-            InitCore();
         }
 
         #region 变量私有方法
@@ -62,62 +64,6 @@ namespace WPFSerialAssistant
         /// </summary>
         private bool autoReply = false;
 
-        /// <summary>
-        /// 核心初始化
-        /// </summary>
-        private void InitCore()
-        {
-            if (File.Exists(configPath))
-            {
-                // 配置文件存在
-                Config = XmlHelper.XmlDeserializeFromFile<Config>(configPath);
-            }
-            else
-            {
-                // 配置不文件存在
-                XmlHelper.XmlSerializeToFile(Config, configPath);
-            }
-
-            if (Config.FoupCmd.Count == 0)
-            {
-                Config.FoupCmd.Add(new BatchSendCmd() { Name = "读取版本信息", sendBuff = "GET:LIOI;" });
-
-                Config.FoupCmd.Add(new BatchSendCmd() { Name = "MOVEORGN", sendBuff = "MOV:ORGN;" });
-            }
-
-            if (Config.batchCmd.Count == 0)
-            {
-                Config.batchCmd.Add(new BatchSendCmd()
-                {
-                    Name = "测试一",
-                    sendBuff = "11 22 33",
-                    delayMs = 100
-                });
-                Config.batchCmd.Add(new BatchSendCmd()
-                {
-                    Name = "测试二",
-                    sendBuff = "11 22 33",
-                    delayMs = 100
-                });
-            }
-
-            tbxSendData1.Text = Config.SendData1;
-            tbxSendData2.Text = Config.SendData2;
-            tbxSendData3.Text = Config.SendData3;
-
-            // 加载配置信息
-            LoadConfig();
-
-            // 其他模块初始化
-            InitClockTimer();
-            InitAutoSendDataTimer();
-            InitSerialPort();
-
-            // 查找可以使用的端口号
-            FindPorts();
-        }
-
-        #region 状态栏
         /// <summary>
         /// 更新时间信息
         /// </summary>
@@ -166,8 +112,6 @@ namespace WPFSerialAssistant
             statusInfoTextBlock.Text = message;
         }
 
-        #endregion
-
         /// <summary>
         /// 显示接收数据
         /// </summary>
@@ -213,57 +157,59 @@ namespace WPFSerialAssistant
         /// <summary>
         /// 发送的方式
         /// </summary>
-        private SendMode sendMode = SendMode.Character;
+        private SendMode _sendMode = SendMode.Character;
 
-        /// <summary>
-        /// 记录日志
-        /// </summary>
-        /// <param name="dataType"></param>
-        /// <param name="buff"></param>
-        private void BuffAppendRichTextBox(byte dataType, byte[] buff)
-        {
-            string typeStr;
-            Color showColor;
-            if (dataType == 1)
-            {
-                if (!showSendData) return;
+        private Logger log = LogManager.GetCurrentClassLogger();
 
-                // 发送
-                typeStr = "发送";
-                showColor = Colors.Blue;
-            }
-            else if (dataType == 2)
-            {
-                typeStr = "接收";
-                showColor = Colors.Blue;
-            }
-            else if (dataType == 99)
-            {
-                typeStr = "异常";
-                showColor = Colors.Red;
-            }
-            else
-            {
-                typeStr = "普通";
-                showColor = Colors.Black;
-            }
+        ///// <summary>
+        ///// 记录日志
+        ///// </summary>
+        ///// <param name="dataType"></param>
+        ///// <param name="buff"></param>
+        //private void BuffAppendRichTextBox(byte dataType, byte[] buff)
+        //{
+        //    string typeStr;
+        //    Color showColor;
+        //    if (dataType == 1)
+        //    {
+        //        if (!showSendData) return;
 
-            Dispatcher.Invoke(new Action(() =>
-            {
-                // 根据显示模式显示接收到的字节.
-                string byteStr = Utilities.BytesToText(buff.ToList(), receiveMode, serialPort.Encoding);
-                string msg = $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff")}][{typeStr}]   {byteStr}{Environment.NewLine}";
+        //        // 发送
+        //        typeStr = "发送";
+        //        showColor = Colors.Blue;
+        //    }
+        //    else if (dataType == 2)
+        //    {
+        //        typeStr = "接收";
+        //        showColor = Colors.Blue;
+        //    }
+        //    else if (dataType == 99)
+        //    {
+        //        typeStr = "异常";
+        //        showColor = Colors.Red;
+        //    }
+        //    else
+        //    {
+        //        typeStr = "普通";
+        //        showColor = Colors.Black;
+        //    }
 
-                Paragraph p = new Paragraph(new Run(msg));
-                p.FontSize = 14;
-                p.LineHeight = 1;
-                p.Foreground = new SolidColorBrush(showColor);
-                recvDataRichTextBox.Document.Blocks.Add(p);
-                recvDataRichTextBox.ScrollToEnd();
+        //    Dispatcher.Invoke(new Action(() =>
+        //    {
+        //        // 根据显示模式显示接收到的字节.
+        //        string byteStr = Utilities.BytesToText(buff.ToList(), receiveMode, serialPort.Encoding);
+        //        string msg = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss:fff}][{typeStr}] {byteStr}";
 
-                dataRecvStatusBarItem.Visibility = Visibility.Collapsed;
-            }));
-        }
+        //        Paragraph p = new Paragraph(new Run(msg));
+        //        p.FontSize = Config.LogFontSize;
+        //        // p.LineHeight = 20;
+        //        p.Foreground = new SolidColorBrush(showColor);
+        //        recvDataRichTextBox.Document.Blocks.Add(p);
+        //        recvDataRichTextBox.ScrollToEnd();
+
+        //        dataRecvStatusBarItem.Visibility = Visibility.Collapsed;
+        //    }));
+        //}
 
         private void LogSend(string byteStr)
         {
@@ -276,7 +222,13 @@ namespace WPFSerialAssistant
             BuffAppendRichTextBox(byteStr, 1);
         }
 
-        private void LogRecv(string byteStr)
+        private void LogRx(byte[] bytes)
+        {
+            string byteStr = Utilities.BytesToText(bytes.ToList(), receiveMode, serialPort.Encoding);
+            BuffAppendRichTextBox(byteStr, 2);
+        }
+
+        private void LogRx(string byteStr)
         {
             BuffAppendRichTextBox(byteStr, 2);
         }
@@ -320,11 +272,12 @@ namespace WPFSerialAssistant
             Dispatcher.Invoke(new Action(() =>
             {
                 // 根据显示模式显示接收到的字节.
-                string msg = $"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss:fff")}][{typeStr}]   {byteStr}{Environment.NewLine}";
+                string msg = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss:fff}][{typeStr}] {byteStr}";
 
                 Paragraph p = new Paragraph(new Run(msg));
-                p.FontSize = 14;
-                p.LineHeight = 1;
+                p.FontSize = Config.LogFontSize;
+                // p.LineHeight = 20;
+                p.Margin = new Thickness(0);
                 p.Foreground = new SolidColorBrush(showColor);
                 recvDataRichTextBox.Document.Blocks.Add(p);
                 recvDataRichTextBox.ScrollToEnd();
@@ -348,6 +301,10 @@ namespace WPFSerialAssistant
             Information("串口自动发送数据中...");
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         private int GetAutoSendDataInterval()
         {
             int interval = 1000;
@@ -372,6 +329,38 @@ namespace WPFSerialAssistant
             }
 
             return interval;
+        }
+
+        private void AddBatchCmdControl(int i, BatchSendCmd sendCmd)
+        {
+            RowDefinition row1 = new RowDefinition();   //实例化一个Grid行
+            row1.Height = new GridLength(30);
+            gdBatchCmd.RowDefinitions.Add(row1);
+            Thickness tn = new Thickness(2, 5, 10, 5);
+
+            TextBlock lbl = new TextBlock();
+            lbl.Text = i + 1 + ". ";
+            lbl.Padding = tn;
+            Grid.SetRow(lbl, i);
+            Grid.SetColumn(lbl, 0);
+            gdBatchCmd.Children.Add(lbl);
+
+            TextBox tbx = new TextBox();
+            tbx.Text = sendCmd.sendBuff;
+            tbx.Padding = tn;
+            Grid.SetRow(tbx, i);
+            Grid.SetColumn(tbx, 1);
+            gdBatchCmd.Children.Add(tbx);
+
+            Button btn = new Button();
+            btn.Content = sendCmd.Name;
+            //btn.Width= 100;
+            btn.Padding = tn;
+            btn.Tag = sendCmd;
+            btn.Click += batchSendCmd_Click;
+            Grid.SetRow(btn, i);
+            Grid.SetColumn(btn, 2);
+            gdBatchCmd.Children.Add(btn);
         }
 
         #region 配置信息
@@ -400,11 +389,11 @@ namespace WPFSerialAssistant
             // 配置对象实例
             Configuration config = new Configuration();
 
-            // 保存波特率
-            AddBaudRate(config);
+            //// 保存波特率
+            //config.Add("baudRate", baudRateComboBox.Text);
 
-            // 串口号
-            config.Add("port", portsComboBox.Text);
+            //// 串口号
+            //config.Add("port", portsComboBox.Text);
 
             // 保存奇偶校验位
             config.Add("parity", parityComboBox.SelectedIndex);
@@ -441,7 +430,7 @@ namespace WPFSerialAssistant
             config.Add("showReceiveData", showReceiveData);
 
             // 保存发送模式
-            config.Add("sendMode", sendMode);
+            config.Add("sendMode", _sendMode);
 
             // 保存发送追加
             config.Add("appendContent", appendContent);
@@ -449,15 +438,6 @@ namespace WPFSerialAssistant
 
             // 保存配置信息到磁盘中
             Configuration.Save(config, configFile);
-        }
-
-        /// <summary>
-        /// 将波特率列表添加进去
-        /// </summary>
-        /// <param name="conf"></param>
-        private void AddBaudRate(Configuration conf)
-        {
-            conf.Add("baudRate", baudRateComboBox.Text);
         }
 
         /// <summary>
@@ -472,11 +452,11 @@ namespace WPFSerialAssistant
                 return false;
             }
 
-            portsComboBox.Text = config.GetString("port");
+            //portsComboBox.Text = config.GetString("port");
 
-            // 获取波特率
-            string baudRateStr = config.GetString("baudRate");
-            baudRateComboBox.Text = baudRateStr;
+            //// 获取波特率
+            //string baudRateStr = config.GetString("baudRate");
+            //baudRateComboBox.Text = baudRateStr;
 
             // 获取奇偶校验位
             int parityIndex = config.GetInt("parity");
@@ -548,15 +528,15 @@ namespace WPFSerialAssistant
             showRecvDataCheckBox.IsChecked = showReceiveData;
 
             // 加载发送模式
-            sendMode = (SendMode)config.GetInt("sendMode");
+            _sendMode = (SendMode)config.GetInt("sendMode");
 
-            switch (sendMode)
+            switch (_sendMode)
             {
                 case SendMode.Character:
-                    sendCharacterRadioButton.IsChecked = true;
+                    RbtnSendAsc.IsChecked = true;
                     break;
                 case SendMode.Hex:
-                    sendHexRadioButton.IsChecked = true;
+                    RbtnSendHex.IsChecked = true;
                     break;
                 default:
                     break;
@@ -594,37 +574,64 @@ namespace WPFSerialAssistant
         {
             try
             {
+                if (File.Exists(configPath))
+                {
+                    // 配置文件存在
+                    Config = XmlHelper.XmlDeserializeFromFile<Config>(configPath);
+                }
+                else
+                {
+                    // 配置不文件存在
+                    XmlHelper.XmlSerializeToFile(Config, configPath);
+                }
+
+                if (Config.FoupCmd.Count == 0)
+                {
+                    Config.FoupCmd.Add(new BatchSendCmd() { Name = "读取版本信息", sendBuff = "GET:LIOI;" });
+
+                    Config.FoupCmd.Add(new BatchSendCmd() { Name = "MOVEORGN", sendBuff = "MOV:ORGN;" });
+                }
+
+                if (Config.batchCmd.Count == 0)
+                {
+                    Config.batchCmd.Add(new BatchSendCmd()
+                    {
+                        Name = "测试一",
+                        sendBuff = "11 22 33",
+                        delayMs = 100
+                    });
+                    Config.batchCmd.Add(new BatchSendCmd()
+                    {
+                        Name = "测试二",
+                        sendBuff = "11 22 33",
+                        delayMs = 100
+                    });
+                }
+
+                CbxPort.Text = Config.PortName;
+                CbxBaudRate.Text = Config.BaudRate.ToString();
+                tbxSendData1.Text = Config.SendData1;
+                tbxSendData2.Text = Config.SendData2;
+                tbxSendData3.Text = Config.SendData3;
+
+                // 加载配置信息
+                LoadConfig();
+
+                // 其他模块初始化
+                InitClockTimer();
+                InitAutoSendDataTimer();
+                InitSerialPort();
+
+                // 查找可以使用的端口号
+                FindPorts();
+
+                if (Config.ConnOnStart)
+                    btnOpenClose.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+
                 // 动态生成按钮
                 for (int i = 0; i < Config.batchCmd.Count; i++)
                 {
-                    BatchSendCmd sendCmd = Config.batchCmd[i];
-
-                    RowDefinition row1 = new RowDefinition();   //实例化一个Grid行
-                    gdBatchCmd.RowDefinitions.Add(row1);
-
-                    TextBlock lbl = new TextBlock();
-                    lbl.Text = i + 1 + ". ";
-                    lbl.Padding = new Thickness(2, 5, 10, 5);
-                    gdBatchCmd.Children.Add(lbl);
-                    Grid.SetRow(lbl, i);
-                    Grid.SetColumn(lbl, 0);
-
-                    TextBox tbx = new TextBox();
-                    tbx.Text = sendCmd.sendBuff;
-                    tbx.Padding = new Thickness(2, 5, 10, 5);
-                    gdBatchCmd.Children.Add(tbx);
-                    Grid.SetRow(tbx, i);
-                    Grid.SetColumn(tbx, 1);
-
-                    Button btn = new Button();
-                    btn.Content = sendCmd.Name;
-                    //btn.Width= 100;
-                    btn.Padding = new Thickness(10, 5, 10, 5);
-                    btn.Tag = Config.batchCmd[i];
-                    btn.Click += batchSendCmd_Click;
-                    gdBatchCmd.Children.Add(btn);
-                    Grid.SetRow(btn, i);
-                    Grid.SetColumn(btn, 2);
+                    AddBatchCmdControl(i, Config.batchCmd[i]);
                 }
 
                 for (int i = 0; i < Config.FoupCmd.Count; i++)
@@ -632,6 +639,7 @@ namespace WPFSerialAssistant
                     BatchSendCmd sendCmd = Config.FoupCmd[i];
 
                     RowDefinition row1 = new RowDefinition();   //实例化一个Grid行
+                    row1.Height = new GridLength(30);
                     gdFoupTestCmd.RowDefinitions.Add(row1);
 
                     TextBlock lbl = new TextBlock();
@@ -658,9 +666,12 @@ namespace WPFSerialAssistant
                     Grid.SetRow(btn, i);
                     Grid.SetColumn(btn, 2);
                 }
+
+                log.Debug("System Start...");
             }
             catch (Exception ex)
             {
+                log.Error(ex);
                 MessageBox.Show(this, ex.Message);
             }
         }
@@ -780,14 +791,14 @@ namespace WPFSerialAssistant
             {
                 if (ClosePort())
                 {
-                    openClosePortButton.Content = "打开";
+                    btnOpenClose.Content = "打开";
                 }
             }
             else
             {
                 if (OpenPort())
                 {
-                    openClosePortButton.Content = "关闭";
+                    btnOpenClose.Content = "关闭";
                 }
             }
         }
@@ -822,7 +833,10 @@ namespace WPFSerialAssistant
                 sendText = tbxSendData2.Text.Trim();
             else if (btn.Name.IndexOf("3") >= 0)
                 sendText = tbxSendData3.Text.Trim();
-            SerialPortWrite(sendText, sendMode);
+
+            if (_sendMode == SendMode.Character)
+                sendText += appendContent;
+            SerialPortWrite(sendText, _sendMode);
         }
 
         /// <summary>
@@ -847,6 +861,7 @@ namespace WPFSerialAssistant
             BatchSendCmd sendCmd = btn.Tag as BatchSendCmd;
             if (sendCmd == null) return;
 
+            LogSend($"{sendCmd.Name} {sendCmd.sendBuff}");
             byte[] newCmd = new FoupHelper().GetCmdBuff(sendCmd.sendBuff);
             SerialPortWrite(newCmd);
         }
@@ -926,14 +941,14 @@ namespace WPFSerialAssistant
                 switch (rb.Tag.ToString())
                 {
                     case "char":
-                        sendMode = SendMode.Character;
+                        _sendMode = SendMode.Character;
                         Information("提示：发送字符文本。");
                         // 将文本框中内容转换成char
                         tbxSendData1.Text = Utilities.ToSpecifiedText(tbxSendData1.Text, SendMode.Character, serialPort.Encoding);
                         break;
                     case "hex":
                         // 将文本框中的内容转换成hex
-                        sendMode = SendMode.Hex;
+                        _sendMode = SendMode.Hex;
                         Information("提示：发送十六进制。输入十六进制数据之间用空格隔开，如：1D 2A 38。");
                         tbxSendData1.Text = Utilities.ToSpecifiedText(tbxSendData1.Text, SendMode.Hex, serialPort.Encoding);
                         break;
@@ -1026,27 +1041,23 @@ namespace WPFSerialAssistant
         {
             try
             {
+                if (MessageBox.Show("确认要退出吗？", "小贴士", MessageBoxButton.YesNo, MessageBoxImage.Information) != MessageBoxResult.Yes)
+                    e.Cancel = true;    // 取消关闭操作
+
                 // 释放没有关闭的端口资源
                 if (serialPort.IsOpen)
-                {
                     ClosePort();
-                }
 
-                // 提示是否需要保存配置到文件中
-                if (MessageBox.Show("是否在退出前保存软件配置？", "小贴士", MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes)
-                {
-                    SaveConfig();
+                SaveConfig();
 
-                    //写配置文件
-                    Config.PortName = portsComboBox.Text;
-                    Config.SendData1 = tbxSendData1.Text.Trim();
-                    Config.SendData2 = tbxSendData2.Text.Trim();
-                    Config.SendData3 = tbxSendData3.Text.Trim();
+                //写配置文件
+                Config.PortName = CbxPort.Text;
+                Config.BaudRate = int.Parse(CbxBaudRate.Text);
+                Config.SendData1 = tbxSendData1.Text.Trim();
+                Config.SendData2 = tbxSendData2.Text.Trim();
+                Config.SendData3 = tbxSendData3.Text.Trim();
 
-
-
-                    XmlHelper.XmlSerializeToFile(Config, configPath);
-                }
+                XmlHelper.XmlSerializeToFile(Config, configPath);
             }
             catch (Exception ex)
             {
@@ -1101,7 +1112,7 @@ namespace WPFSerialAssistant
             {
                 //recvDataRichTextBox.AppendText("Timeout!\n");
                 // 进行数据处理，采用新的线程进行处理。
-                Thread dataHandler = new Thread(new ParameterizedThreadStart(ReceivedDataHandler));
+                Thread dataHandler = new Thread(ReceivedDataHandler);
                 dataHandler.Start(receiveBuffer);
             }
         }
@@ -1114,11 +1125,10 @@ namespace WPFSerialAssistant
 
             if (recvBuffer.Count == 0) return;
 
-
             // 必须应当保证全局缓冲区的数据能够被完整地备份出来，这样才能进行进一步的处理。
             shouldClear = true;
 
-            BuffAppendRichTextBox(2, recvBuffer.ToArray());
+            LogRx(recvBuffer.ToArray());
 
             // TO-DO：
             // 处理数据，比如解析指令等等
@@ -1161,7 +1171,7 @@ namespace WPFSerialAssistant
 
                     sr.Write(text);
 
-                    Information(string.Format("成功保存数据到{0}", path));
+                    Information($"成功保存数据到{path}");
                 }
             }
             catch (Exception ex)
@@ -1188,27 +1198,27 @@ namespace WPFSerialAssistant
         {
             string[] portList = SerialPort.GetPortNames();
             Array.Sort(portList);
-            portsComboBox.ItemsSource = portList;
-            if (portsComboBox.Items.Count > 0)
+            CbxPort.ItemsSource = portList;
+            if (CbxPort.Items.Count > 0)
             {
                 if (portList.Contains(Config.PortName))
                 {
                     // 取配置文件串口号
-                    portsComboBox.SelectedValue = Config.PortName;
+                    CbxPort.SelectedValue = Config.PortName;
                 }
                 else
                 {
                     // 没找到时默认选择第一个
-                    portsComboBox.SelectedIndex = 0;
+                    CbxPort.SelectedIndex = 0;
                 }
 
 
-                portsComboBox.IsEnabled = true;
-                Information(string.Format("查找到可以使用的端口{0}个。", portsComboBox.Items.Count.ToString()));
+                CbxPort.IsEnabled = true;
+                Information($"查找到可以使用的端口{CbxPort.Items.Count.ToString()}个。");
             }
             else
             {
-                portsComboBox.IsEnabled = false;
+                CbxPort.IsEnabled = false;
                 Alert("Oops，没有查找到可用端口；您可以点击“查找”按钮手动查找。");
             }
         }
@@ -1223,7 +1233,7 @@ namespace WPFSerialAssistant
                 serialPort.Open();
                 serialPort.DiscardInBuffer();
                 serialPort.DiscardOutBuffer();
-                Information(string.Format("成功打开端口{0}, 波特率{1}。", serialPort.PortName, serialPort.BaudRate.ToString()));
+                Information($"成功打开端口{serialPort.PortName}, 波特率{serialPort.BaudRate.ToString()}。");
                 flag = true;
             }
             catch (Exception ex)
@@ -1256,25 +1266,12 @@ namespace WPFSerialAssistant
 
         private void ConfigurePort()
         {
-            serialPort.PortName = GetSelectedPortName();
-            serialPort.BaudRate = GetSelectedBaudRate();
+            serialPort.PortName = CbxPort.Text;
+            serialPort.BaudRate = int.Parse(CbxBaudRate.Text);
             serialPort.Parity = GetSelectedParity();
             serialPort.DataBits = GetSelectedDataBits();
             serialPort.StopBits = GetSelectedStopBits();
             serialPort.Encoding = GetSelectedEncoding();
-        }
-
-        private string GetSelectedPortName()
-        {
-            return portsComboBox.Text;
-        }
-
-        private int GetSelectedBaudRate()
-        {
-            int baudRate = 9600;
-            //string conv = baudRateComboBox.Text;
-            int.TryParse(baudRateComboBox.Text, out baudRate);
-            return baudRate;
         }
 
         private Parity GetSelectedParity()
@@ -1381,15 +1378,12 @@ namespace WPFSerialAssistant
 
             try
             {
-                //serialPort.DiscardOutBuffer();
-                //serialPort.DiscardInBuffer();
-
                 if (sendMode == SendMode.Character)
                 {
-                    string sendMsg = textData + appendContent;
+                    string sendMsg = textData;
                     serialPort.Write(sendMsg);
 
-                    LogSend(sendMsg);
+                    LogSend($"{sendMsg.Trim()} ({Encoding.UTF8.GetBytes(sendMsg).ByteToHexString()})");
                 }
                 else if (sendMode == SendMode.Hex)
                 {
@@ -1406,11 +1400,11 @@ namespace WPFSerialAssistant
                 }
 
                 // 报告发送成功的消息，提示用户。
-                Information($"成功发送：{textData}");
+                Information($"成功发送：{textData.Trim()}");
             }
             catch (Exception ex)
             {
-                Alert(ex.Message);
+                LogError(ex.ToString());
                 return false;
             }
 
@@ -1473,8 +1467,8 @@ namespace WPFSerialAssistant
                 AutoBackRule backRule = getBackBuff(readBuff);
                 if (backRule == null)
                 {
-                    BuffAppendRichTextBox(2, readBuff.ToArray());
-                    BuffAppendRichTextBox("未找到回复命令，请在配置文件中配置", 99);
+                    LogRx(readBuff.ToArray());
+                    LogError("未找到回复命令，请在配置文件中配置");
                 }
                 else
                 {
@@ -1487,7 +1481,7 @@ namespace WPFSerialAssistant
             }
             else
             {
-                BuffAppendRichTextBox(2, readBuff.ToArray());
+                LogRx(readBuff.ToArray());
             }
         }
 
@@ -1689,6 +1683,16 @@ namespace WPFSerialAssistant
                 default:
                     break;
             }
+        }
+
+        private void BtnAddBatchCmd_OnClick(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void BtnSaveConfig_OnClick(object sender, RoutedEventArgs e)
+        {
+            saveConfigMenuItem.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
         }
     }
 

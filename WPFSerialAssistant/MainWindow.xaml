@@ -187,7 +187,6 @@
                                         </Grid>
                                         <CheckBox x:Name="cbxAutoReply" Padding="0" Margin="10" Unchecked="cbxAutoReply_Unchecked" Checked="cbxAutoReply_Checked" >自动应答</CheckBox>
                                         <CheckBox Name="showRecvDataCheckBox" Content="显示接收数据" Click="showRecvDataCheckBox_Click" IsChecked="True" Margin="10,5" Padding="0" Checked="showRecvDataCheckBox_Checked" Unchecked="showRecvDataCheckBox_Unchecked"/>
-                                        <CheckBox x:Name="Cbx" Padding="0" Margin="10" Unchecked="cbxAutoReply_Unchecked" Checked="cbxAutoReply_Checked" >自动应答</CheckBox>
                                         <Button x:Name="clearSendDataTextBox" Content="清空发送区" Margin="10,5" Padding="3" Click="clearSendDataTextBox_Click"/>
                                         <Button Name="saveRecvDataButton" Content="保存接收区数据" Margin="10,5" Padding="3" Click="saveRecvDataButton_Click" ToolTip="使用Ctrl+S也可以快捷保存哦！"/>
                                         <Button Name="clearRecvDataBoxButton" Content="清空接收区" Margin="10,5" Padding="3" Click="clearRecvDataBoxButton_Click"></Button>

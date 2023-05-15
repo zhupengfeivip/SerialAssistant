@@ -557,6 +557,17 @@ namespace WPFSerialAssistant
                     });
                 }
 
+                if (Config.AutoBackRule.Count == 0)
+                {
+                    Config.AutoBackRule.Add(new AutoBackRule()
+                    {
+                        Name = "测试自动回复",
+                        Description = "测试自动回复",
+                        BackBuff = "AA BB CC",
+                        RecvBuff = "CC BB AA"
+                    });
+                }
+
                 CbxPort.Text = Config.PortName;
                 CbxBaudRate.Text = Config.BaudRate.ToString();
                 tbxSendData1.Text = Config.SendData1;
@@ -1202,7 +1213,7 @@ namespace WPFSerialAssistant
                 StopAutoSendDataTimer();
                 progressBar.Visibility = Visibility.Collapsed;
                 serialPort.Close();
-                Information(string.Format("成功关闭端口{0}。", serialPort.PortName));
+                Information($"成功关闭端口{serialPort.PortName}。");
                 flag = true;
             }
             catch (Exception ex)
@@ -1398,13 +1409,14 @@ namespace WPFSerialAssistant
         /// <param name="e"></param>
         private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
-            SerialPort sp = sender as SerialPort;
+            if (!(sender is SerialPort sp)) return;
 
-            if (sp == null) return;
+            // 收到数据后等待100ms，让数据接收完
+            Thread.Sleep(100);
 
             // 临时缓冲区将保存串口缓冲区的所有数据
-            int bytesToRead = sp.BytesToRead;
-            byte[] readBuff = new byte[bytesToRead];
+            var bytesToRead = sp.BytesToRead;
+            var readBuff = new byte[bytesToRead];
 
             // 将缓冲区所有字节读取出来
             sp.Read(readBuff, 0, bytesToRead);
@@ -1419,11 +1431,11 @@ namespace WPFSerialAssistant
                 }
                 else
                 {
-                    LogRx($"{backRule.Name},{backRule.Description},{ByteExp.ByteToHexString(readBuff.ToArray())}");
+                    LogRx($"{backRule.Name},{backRule.Description},{readBuff.ToArray().ByteToHexString()}");
 
-                    byte[] backBuff = StringExp.ToBytes(backRule.BackBuff.Replace(" ", ""));
+                    var backBuff = backRule.BackBuff.Replace(" ", "").ToBytes();
                     sp.Write(backBuff, 0, backBuff.Length);
-                    LogSend($"{backRule.Name},{backRule.Description},{ByteExp.ByteToHexString(backBuff.ToArray())}");
+                    LogSend($"{backRule.Name},{backRule.Description},{backBuff.ToArray().ByteToHexString()}");
                 }
             }
             else

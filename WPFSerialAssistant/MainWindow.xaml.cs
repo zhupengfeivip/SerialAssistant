@@ -113,11 +113,6 @@ namespace WPFSerialAssistant
         }
 
         /// <summary>
-        /// 显示接收数据
-        /// </summary>
-        private bool showSendData = true;
-
-        /// <summary>
         /// SerialPort对象
         /// </summary>
         private SerialPort serialPort = new SerialPort();
@@ -159,57 +154,10 @@ namespace WPFSerialAssistant
         /// </summary>
         private SendMode _sendMode = SendMode.Character;
 
-        private Logger log = LogManager.GetCurrentClassLogger();
-
-        ///// <summary>
-        ///// 记录日志
-        ///// </summary>
-        ///// <param name="dataType"></param>
-        ///// <param name="buff"></param>
-        //private void BuffAppendRichTextBox(byte dataType, byte[] buff)
-        //{
-        //    string typeStr;
-        //    Color showColor;
-        //    if (dataType == 1)
-        //    {
-        //        if (!showSendData) return;
-
-        //        // 发送
-        //        typeStr = "发送";
-        //        showColor = Colors.Blue;
-        //    }
-        //    else if (dataType == 2)
-        //    {
-        //        typeStr = "接收";
-        //        showColor = Colors.Blue;
-        //    }
-        //    else if (dataType == 99)
-        //    {
-        //        typeStr = "异常";
-        //        showColor = Colors.Red;
-        //    }
-        //    else
-        //    {
-        //        typeStr = "普通";
-        //        showColor = Colors.Black;
-        //    }
-
-        //    Dispatcher.Invoke(new Action(() =>
-        //    {
-        //        // 根据显示模式显示接收到的字节.
-        //        string byteStr = Utilities.BytesToText(buff.ToList(), receiveMode, serialPort.Encoding);
-        //        string msg = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss:fff}][{typeStr}] {byteStr}";
-
-        //        Paragraph p = new Paragraph(new Run(msg));
-        //        p.FontSize = Config.LogFontSize;
-        //        // p.LineHeight = 20;
-        //        p.Foreground = new SolidColorBrush(showColor);
-        //        recvDataRichTextBox.Document.Blocks.Add(p);
-        //        recvDataRichTextBox.ScrollToEnd();
-
-        //        dataRecvStatusBarItem.Visibility = Visibility.Collapsed;
-        //    }));
-        //}
+        /// <summary>
+        /// 
+        /// </summary>
+        private readonly Logger log = LogManager.GetCurrentClassLogger();
 
         private void LogSend(string byteStr)
         {
@@ -268,6 +216,7 @@ namespace WPFSerialAssistant
                 typeStr = "普通";
                 showColor = Colors.Black;
             }
+            log.Debug($"[{typeStr}] {byteStr}");
 
             Dispatcher.Invoke(new Action(() =>
             {
@@ -1457,8 +1406,6 @@ namespace WPFSerialAssistant
             int bytesToRead = sp.BytesToRead;
             byte[] readBuff = new byte[bytesToRead];
 
-            Trace.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss:fff} 接收数据：{bytesToRead}");
-
             // 将缓冲区所有字节读取出来
             sp.Read(readBuff, 0, bytesToRead);
 
@@ -1472,11 +1419,11 @@ namespace WPFSerialAssistant
                 }
                 else
                 {
-                    BuffAppendRichTextBox($"{backRule.Name},{backRule.Description},{ByteExp.ByteToHexString(readBuff.ToArray())}", 2);
+                    LogRx($"{backRule.Name},{backRule.Description},{ByteExp.ByteToHexString(readBuff.ToArray())}");
 
                     byte[] backBuff = StringExp.ToBytes(backRule.BackBuff.Replace(" ", ""));
                     sp.Write(backBuff, 0, backBuff.Length);
-                    BuffAppendRichTextBox($"{backRule.Name},{backRule.Description},{ByteExp.ByteToHexString(backBuff.ToArray())}", 1);
+                    LogSend($"{backRule.Name},{backRule.Description},{ByteExp.ByteToHexString(backBuff.ToArray())}");
                 }
             }
             else

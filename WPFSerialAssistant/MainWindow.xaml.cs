@@ -8,7 +8,6 @@ using System.IO.Ports;
 using System.Linq;
 using System.Text;
 using System.Threading;
-//using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -1195,6 +1194,8 @@ namespace WPFSerialAssistant
                 serialPort.DiscardOutBuffer();
                 Information($"成功打开端口{serialPort.PortName}, 波特率{serialPort.BaudRate.ToString()}。");
                 flag = true;
+
+                Title = $"小朱串口调试工具({serialPort.PortName},{serialPort.BaudRate})";
             }
             catch (Exception ex)
             {
@@ -1215,6 +1216,8 @@ namespace WPFSerialAssistant
                 serialPort.Close();
                 Information($"成功关闭端口{serialPort.PortName}。");
                 flag = true;
+
+                Title = $"小朱串口调试工具";
             }
             catch (Exception ex)
             {

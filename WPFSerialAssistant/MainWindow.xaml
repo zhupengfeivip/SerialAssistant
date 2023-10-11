@@ -211,8 +211,8 @@
                                         <RowDefinition></RowDefinition>
                                         <RowDefinition></RowDefinition>
                                     </Grid.RowDefinitions>
-                                    <TextBox Name="tbxSendData1" FontFamily="Lucida Console" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Padding="5" Margin="5,0,0,0" Height="80">Hello, world!</TextBox>
-                                    <Button Name="btnSend1" Click="sendDataButton_Click" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" Padding="3" Content="发送" Margin="5,0"></Button>
+                                    <TextBox Name="TbxSendData1" FontFamily="Lucida Console" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Padding="5" Margin="5,0,0,0" Height="80">Hello, world!</TextBox>
+                                    <Button Name="BtnSend1" Click="sendDataButton_Click" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" Padding="3" Content="发送" Margin="5,0"></Button>
                                     <TextBox Name="tbxSendData2" FontFamily="Lucida Console" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Padding="5" Margin="5,0,0,0">Hello, world!</TextBox>
                                     <Button Name="btnSend2" Click="sendDataButton_Click" Grid.Row="1" Grid.Column="1" VerticalAlignment="Center" Padding="3" Content="发送" Margin="5,0"></Button>
                                     <TextBox Name="tbxSendData3" FontFamily="Lucida Console" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Padding="5" Margin="5,0,0,0">Hello, world!</TextBox>
@@ -226,14 +226,14 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"></ColumnDefinition>
                         <ColumnDefinition Width="5"></ColumnDefinition>
-                        <ColumnDefinition Width="Auto"></ColumnDefinition>
+                        <ColumnDefinition Width="400"></ColumnDefinition>
                     </Grid.ColumnDefinitions>
                     <GroupBox Grid.Row="0" HorizontalAlignment="Center" Header="通讯日志" BorderBrush="{Binding ElementName=serialPortConfigPanel, Path=BorderBrush}" BorderThickness="{Binding ElementName=serialPortConfigPanel, Path=BorderThickness}">
                         <RichTextBox Name="recvDataRichTextBox" Margin="2" BorderThickness="0" IsReadOnly="True">
                             <FlowDocument FontFamily="Lucida Console" Focusable="True" LineHeight="1"></FlowDocument>
                         </RichTextBox>
                     </GroupBox>
-                    <GridSplitter Grid.Column="1" Height="5" HorizontalAlignment="Stretch"  VerticalAlignment="Center"
+                    <GridSplitter Grid.Column="1" Height="50" HorizontalAlignment="Stretch"  VerticalAlignment="Center"
                                   Background="Black" 
                                   ShowsPreview="true"
                                   ResizeDirection="Columns" />
@@ -241,11 +241,15 @@
                         <TabItem Header="自动发送">
                             <GroupBox Header="自动发送设置面板"  BorderBrush="{Binding ElementName=serialPortConfigPanel, Path=BorderBrush}" BorderThickness="{Binding ElementName=serialPortConfigPanel, Path=BorderThickness}">
                                 <Grid Margin="0,5">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="4*"/>
+                                        <RowDefinition Height="23*"/>
+                                    </Grid.RowDefinitions>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="10*"></ColumnDefinition>
                                         <ColumnDefinition Width="10*"></ColumnDefinition>
                                     </Grid.ColumnDefinitions>
-                                    <StackPanel Orientation="Vertical">
+                                    <StackPanel Orientation="Vertical" Grid.RowSpan="2">
                                         <TextBlock Grid.Column="0" TextAlignment="Center" Padding="5">自动发送时间间隔</TextBlock>
                                         <TextBox Name="autoSendIntervalTextBox" Text="1000" Grid.Column="1" Margin="10,0" Padding="5" Width="100" ToolTip="自动发送时间只有在启动自动发送前修改有效；发送过程中修改时间只会在下一次启动自动发送时生效。"></TextBox>
                                         <ComboBox Name="timeUnitComboBox" Grid.Column="2" Padding="5" Width="60">
@@ -268,13 +272,17 @@
                                     <Canvas>
                                         <Button Content="增加" Height="23" Width="45" Name="BtnAddBatchCmd" Click="BtnAddBatchCmd_OnClick" />
                                     </Canvas>
-
-                                    <Grid  Grid.Row="1" Name="gdBatchCmd" Margin="0,5">
+                                    <Grid  Grid.Row="1" Name="GdBatchCmd" Margin="0,5">
                                         <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="20"></ColumnDefinition>
                                             <ColumnDefinition Width="20"></ColumnDefinition>
                                             <ColumnDefinition Width="*"></ColumnDefinition>
                                             <ColumnDefinition Width="80"></ColumnDefinition>
+                                            <ColumnDefinition Width="40"></ColumnDefinition>
+                                            <ColumnDefinition Width="60"></ColumnDefinition>
                                         </Grid.ColumnDefinitions>
+                                        <TextBlock Text="顺序" Grid.Column="4" Grid.Row="0" ></TextBlock>
+                                        <TextBlock Text="延时" Grid.Column="5" Grid.Row="0" ></TextBlock>
                                     </Grid>
                                 </Grid>
                             </ScrollViewer>
@@ -285,34 +293,6 @@
                                     <ColumnDefinition Width="16*"/>
                                     <ColumnDefinition Width="27*"/>
                                 </Grid.ColumnDefinitions>
-                            </Grid>
-                        </TabItem>
-                        <TabItem Header="FOUP测试">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="30"></RowDefinition>
-                                    <RowDefinition></RowDefinition>
-                                </Grid.RowDefinitions>
-                                <Canvas>
-                                    <Button Content="增加" Height="23" Name="BtnAddFoupCmd" Width="75" />
-                                </Canvas>
-                                <Grid Grid.Row="1" Name="gdFoupTestCmd" Margin="0,5">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="20"></ColumnDefinition>
-                                        <ColumnDefinition Width="*"></ColumnDefinition>
-                                        <ColumnDefinition Width="80"></ColumnDefinition>
-                                    </Grid.ColumnDefinitions>
-                                </Grid>
-                            </Grid>
-                        </TabItem>
-                        <TabItem Header="主轴测试">
-                            <Grid Background="#FFE5E5E5">
-                                <WrapPanel>
-                                    <TextBlock TextAlignment="Center" Padding="5">速度</TextBlock>
-                                    <TextBox Text="1000"  Margin="10,0" Padding="5" Width="100" Height="25" ToolTip="自动发送时间只有在启动自动发送前修改有效；发送过程中修改时间只会在下一次启动自动发送时生效。"></TextBox>
-                                    <Button Content="SwitchOn" />
-                                    <Button Content="SwitchOff" />
-                                </WrapPanel>
                             </Grid>
                         </TabItem>
                     </TabControl>

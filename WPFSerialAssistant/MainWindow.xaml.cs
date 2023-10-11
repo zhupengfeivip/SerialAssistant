@@ -46,7 +46,7 @@ namespace WPFSerialAssistant
         /// <summary>
         /// 
         /// </summary>
-        string configPath = Environment.CurrentDirectory + "\\config.xml";
+        private readonly string configPath = Environment.CurrentDirectory + "\\config.xml";
 
         /// <summary>
         /// 
@@ -279,36 +279,92 @@ namespace WPFSerialAssistant
             return interval;
         }
 
-        private void AddBatchCmdControl(int i, BatchSendCmd sendCmd)
+        /// <summary>
+        /// 
+        /// </summary>
+        private void BuildBatchCmdControl()
+        {
+            for (int i = 0; i < Config.batchCmd.Count; i++)
+            {
+                BuildBatchCmdControl(i, Config.batchCmd[i]);
+            }
+        }
+
+        private void AddBatchCmdControl(BatchSendCmd batchCmd)
+        {
+            BuildBatchCmdControl(Config.batchCmd.Count - 1, batchCmd);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void BuildBatchCmdControl(int i, BatchSendCmd batchCmd)
         {
             RowDefinition row1 = new RowDefinition();   //实例化一个Grid行
             row1.Height = new GridLength(30);
-            gdBatchCmd.RowDefinitions.Add(row1);
+            GdBatchCmd.RowDefinitions.Add(row1);
+
             Thickness tn = new Thickness(2, 5, 10, 5);
+            int colIndex = 0;
+            int rowIndex = i + 1;
 
             TextBlock lbl = new TextBlock();
             lbl.Text = i + 1 + ". ";
             lbl.Padding = tn;
-            Grid.SetRow(lbl, i);
-            Grid.SetColumn(lbl, 0);
-            gdBatchCmd.Children.Add(lbl);
+            Grid.SetRow(lbl, rowIndex);
+            Grid.SetColumn(lbl, colIndex++);
+            GdBatchCmd.Children.Add(lbl);
+
+            CheckBox cbx = new CheckBox();
+            Grid.SetRow(cbx, rowIndex);
+            Grid.SetColumn(cbx, colIndex++);
+            GdBatchCmd.Children.Add(cbx);
 
             TextBox tbx = new TextBox();
-            tbx.Text = sendCmd.sendBuff;
+            tbx.Text = batchCmd.SendBuff;
             tbx.Padding = tn;
-            Grid.SetRow(tbx, i);
-            Grid.SetColumn(tbx, 1);
-            gdBatchCmd.Children.Add(tbx);
+            tbx.Tag = i;
+            tbx.MouseDoubleClick += Tbx_MouseDoubleClick;
+            Grid.SetRow(tbx, rowIndex);
+            Grid.SetColumn(tbx, colIndex++);
+            GdBatchCmd.Children.Add(tbx);
 
             Button btn = new Button();
-            btn.Content = sendCmd.Name;
-            //btn.Width= 100;
+            btn.Content = batchCmd.Name;
             btn.Padding = tn;
-            btn.Tag = sendCmd;
+            btn.Tag = Config.batchCmd[i];
             btn.Click += batchSendCmd_Click;
-            Grid.SetRow(btn, i);
-            Grid.SetColumn(btn, 2);
-            gdBatchCmd.Children.Add(btn);
+            Grid.SetRow(btn, rowIndex);
+            Grid.SetColumn(btn, colIndex++);
+            GdBatchCmd.Children.Add(btn);
+
+            tbx = new TextBox();
+            tbx.Text = batchCmd.OrderNo.ToString();
+            tbx.Padding = tn;
+            Grid.SetRow(tbx, rowIndex);
+            Grid.SetColumn(tbx, colIndex++);
+            GdBatchCmd.Children.Add(tbx);
+
+            tbx = new TextBox();
+            tbx.Text = batchCmd.DelayMs.ToString();
+            tbx.Padding = tn;
+            Grid.SetRow(tbx, rowIndex);
+            Grid.SetColumn(tbx, colIndex++);
+            GdBatchCmd.Children.Add(tbx);
+        }
+
+        private void Tbx_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            TextBox tbx = sender as TextBox;
+            if (tbx == null) return;
+
+            int index = Convert.ToInt32(tbx.Tag);
+
+            WinAddEditCmd win = new WinAddEditCmd();
+            win.TbxName.Text = Config.batchCmd[index].Name;
+            win.Title = "修改命令";
+            win.Owner = this;
+            win.ShowDialog();
         }
 
         #region 配置信息
@@ -535,24 +591,25 @@ namespace WPFSerialAssistant
 
                 if (Config.FoupCmd.Count == 0)
                 {
-                    Config.FoupCmd.Add(new BatchSendCmd() { Name = "读取版本信息", sendBuff = "GET:LIOI;" });
+                    Config.FoupCmd.Add(new BatchSendCmd() { Name = "读取版本信息", SendBuff = "GET:LIOI;" });
 
-                    Config.FoupCmd.Add(new BatchSendCmd() { Name = "MOVEORGN", sendBuff = "MOV:ORGN;" });
+                    Config.FoupCmd.Add(new BatchSendCmd() { Name = "MOVEORGN", SendBuff = "MOV:ORGN;" });
                 }
 
                 if (Config.batchCmd.Count == 0)
                 {
+                    // 增加示例数据
                     Config.batchCmd.Add(new BatchSendCmd()
                     {
                         Name = "测试一",
-                        sendBuff = "11 22 33",
-                        delayMs = 100
+                        SendBuff = "11 22 33",
+                        DelayMs = 100
                     });
                     Config.batchCmd.Add(new BatchSendCmd()
                     {
                         Name = "测试二",
-                        sendBuff = "11 22 33",
-                        delayMs = 100
+                        SendBuff = "11 22 33",
+                        DelayMs = 100
                     });
                 }
 
@@ -569,7 +626,7 @@ namespace WPFSerialAssistant
 
                 CbxPort.Text = Config.PortName;
                 CbxBaudRate.Text = Config.BaudRate.ToString();
-                tbxSendData1.Text = Config.SendData1;
+                TbxSendData1.Text = Config.SendData1;
                 tbxSendData2.Text = Config.SendData2;
                 tbxSendData3.Text = Config.SendData3;
 
@@ -588,43 +645,7 @@ namespace WPFSerialAssistant
                     btnOpenClose.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
 
                 // 动态生成按钮
-                for (int i = 0; i < Config.batchCmd.Count; i++)
-                {
-                    AddBatchCmdControl(i, Config.batchCmd[i]);
-                }
-
-                for (int i = 0; i < Config.FoupCmd.Count; i++)
-                {
-                    BatchSendCmd sendCmd = Config.FoupCmd[i];
-
-                    RowDefinition row1 = new RowDefinition();   //实例化一个Grid行
-                    row1.Height = new GridLength(30);
-                    gdFoupTestCmd.RowDefinitions.Add(row1);
-
-                    TextBlock lbl = new TextBlock();
-                    lbl.Text = i + 1 + ". ";
-                    lbl.Padding = new Thickness(2, 5, 10, 5);
-                    gdFoupTestCmd.Children.Add(lbl);
-                    Grid.SetRow(lbl, i);
-                    Grid.SetColumn(lbl, 0);
-
-                    TextBox tbx = new TextBox();
-                    tbx.Text = sendCmd.sendBuff;
-                    tbx.Padding = new Thickness(2, 5, 10, 5);
-                    gdFoupTestCmd.Children.Add(tbx);
-                    Grid.SetRow(tbx, i);
-                    Grid.SetColumn(tbx, 1);
-
-                    Button btn = new Button();
-                    btn.Content = sendCmd.Name;
-                    //btn.Width= 100;
-                    btn.Padding = new Thickness(10, 5, 10, 5);
-                    btn.Tag = Config.FoupCmd[i];
-                    btn.Click += sendFoupCmd_Click;
-                    gdFoupTestCmd.Children.Add(btn);
-                    Grid.SetRow(btn, i);
-                    Grid.SetColumn(btn, 2);
-                }
+                BuildBatchCmdControl();
 
                 log.Debug("System Start...");
             }
@@ -787,7 +808,7 @@ namespace WPFSerialAssistant
             Button btn = sender as Button;
             if (btn == null) return;
             if (btn.Name.IndexOf("1") >= 0)
-                sendText = tbxSendData1.Text.Trim();
+                sendText = TbxSendData1.Text.Trim();
             else if (btn.Name.IndexOf("2") >= 0)
                 sendText = tbxSendData2.Text.Trim();
             else if (btn.Name.IndexOf("3") >= 0)
@@ -820,8 +841,8 @@ namespace WPFSerialAssistant
             BatchSendCmd sendCmd = btn.Tag as BatchSendCmd;
             if (sendCmd == null) return;
 
-            LogSend($"{sendCmd.Name} {sendCmd.sendBuff}");
-            byte[] newCmd = new FoupHelper().GetCmdBuff(sendCmd.sendBuff);
+            LogSend($"{sendCmd.Name} {sendCmd.SendBuff}");
+            byte[] newCmd = new FoupHelper().GetCmdBuff(sendCmd.SendBuff);
             SerialPortWrite(newCmd);
         }
 
@@ -903,13 +924,13 @@ namespace WPFSerialAssistant
                         _sendMode = SendMode.Character;
                         Information("提示：发送字符文本。");
                         // 将文本框中内容转换成char
-                        tbxSendData1.Text = Utilities.ToSpecifiedText(tbxSendData1.Text, SendMode.Character, serialPort.Encoding);
+                        TbxSendData1.Text = Utilities.ToSpecifiedText(TbxSendData1.Text, SendMode.Character, serialPort.Encoding);
                         break;
                     case "hex":
                         // 将文本框中的内容转换成hex
                         _sendMode = SendMode.Hex;
                         Information("提示：发送十六进制。输入十六进制数据之间用空格隔开，如：1D 2A 38。");
-                        tbxSendData1.Text = Utilities.ToSpecifiedText(tbxSendData1.Text, SendMode.Hex, serialPort.Encoding);
+                        TbxSendData1.Text = Utilities.ToSpecifiedText(TbxSendData1.Text, SendMode.Hex, serialPort.Encoding);
                         break;
                     default:
                         break;
@@ -929,7 +950,7 @@ namespace WPFSerialAssistant
 
         private void clearSendDataTextBox_Click(object sender, RoutedEventArgs e)
         {
-            tbxSendData1.Clear();
+            TbxSendData1.Clear();
         }
 
         private void appendRadioButton_Click(object sender, RoutedEventArgs e)
@@ -1012,7 +1033,7 @@ namespace WPFSerialAssistant
                 //写配置文件
                 Config.PortName = CbxPort.Text;
                 Config.BaudRate = int.Parse(CbxBaudRate.Text);
-                Config.SendData1 = tbxSendData1.Text.Trim();
+                Config.SendData1 = TbxSendData1.Text.Trim();
                 Config.SendData2 = tbxSendData2.Text.Trim();
                 Config.SendData3 = tbxSendData3.Text.Trim();
 
@@ -1314,8 +1335,8 @@ namespace WPFSerialAssistant
 
         private bool SerialPortWrite(BatchSendCmd cmdDto)
         {
-            string newCmd = cmdDto.sendBuff + GetAppend(cmdDto.endType);
-            return SerialPortWrite(newCmd, (SendMode)cmdDto.dataType);
+            string newCmd = cmdDto.SendBuff + GetAppend(cmdDto.EndType);
+            return SerialPortWrite(newCmd, (SendMode)cmdDto.DataType);
         }
 
         /// <summary>
@@ -1649,7 +1670,18 @@ namespace WPFSerialAssistant
 
         private void BtnAddBatchCmd_OnClick(object sender, RoutedEventArgs e)
         {
+            WinAddEditCmd win = new WinAddEditCmd();
+            win.Owner = this;
+            win.Title = "新增命令";
+            win.ShowDialog();
 
+            // 保存配置信息到磁盘中
+            XmlHelper.XmlSerializeToFile(Config, configPath);
+
+            BatchSendCmd cmd = new BatchSendCmd();
+
+            Config.batchCmd.Add(cmd);
+            AddBatchCmdControl(cmd);
         }
 
         private void BtnSaveConfig_OnClick(object sender, RoutedEventArgs e)

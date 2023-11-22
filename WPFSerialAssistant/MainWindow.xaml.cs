@@ -497,9 +497,9 @@ namespace WPFSerialAssistant
             config.Add("serialPortConfigPanelVisible", serialPortConfigPanel.Visibility == Visibility.Visible);
             config.Add("autoSendConfigPanelVisible", autoSendConfigPanel.Visibility == Visibility.Visible);
 
-            // 保存接收模式
-            config.Add("receiveMode", receiveMode);
-            config.Add("showReceiveData", showReceiveData);
+            //// 保存接收模式
+            //config.Add("receiveMode", receiveMode);
+            //config.Add("showReceiveData", showReceiveData);
 
             // 保存发送模式
             config.Add("sendMode", _sendMode);
@@ -596,8 +596,8 @@ namespace WPFSerialAssistant
             // 加载接收模式
             cbxRcvShowType.SelectedIndex = config.GetInt("receiveMode");
 
-            showReceiveData = config.GetBool("showReceiveData");
-            showRecvDataCheckBox.IsChecked = showReceiveData;
+            //showReceiveData = config.GetBool("showReceiveData");
+            //showRecvDataCheckBox.IsChecked = showReceiveData;
 
             // 加载发送模式
             _sendMode = (SendMode)config.GetInt("sendMode");
@@ -971,15 +971,15 @@ namespace WPFSerialAssistant
             }
         }
 
-        /// <summary>
-        /// 显示接收数据
-        /// </summary>
-        private bool showReceiveData = true;
+        ///// <summary>
+        ///// 显示接收数据
+        ///// </summary>
+        //private bool showReceiveData = true;
 
-        private void showRecvDataCheckBox_Click(object sender, RoutedEventArgs e)
-        {
-            showReceiveData = (bool)showRecvDataCheckBox.IsChecked;
-        }
+        //private void showRecvDataCheckBox_Click(object sender, RoutedEventArgs e)
+        //{
+        //    showReceiveData = (bool)showRecvDataCheckBox.IsChecked;
+        //}
 
         private void sendDataModeRadioButton_Click(object sender, RoutedEventArgs e)
         {

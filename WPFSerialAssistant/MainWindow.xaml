@@ -25,7 +25,7 @@
                     <RadioButton Name="appednNewLineRadioButton" Tag="newline" Content="新行(\n)" IsChecked="True" Click="appendRadioButton_Click"></RadioButton>
                     <RadioButton Name="appendReturnNewLineRadioButton" Tag="retnewline" Content="回车新行(\r\n)" Click="appendRadioButton_Click"></RadioButton>
                 </MenuItem>
-                <MenuItem Name="miRefreshPort" Header="刷新串口列表" Click="findPortButton_Click"></MenuItem>
+                <MenuItem Name="MiRefreshPort" Header="刷新串口列表" Click="findPortButton_Click"></MenuItem>
             </MenuItem>
 
             <MenuItem Header="视图(_V)">
@@ -185,8 +185,8 @@
                                                 <ComboBoxItem Tag="Mark">二进制</ComboBoxItem>
                                             </ComboBox>
                                         </Grid>
-                                        <CheckBox x:Name="cbxAutoReply" Padding="0" Margin="10" Unchecked="cbxAutoReply_Unchecked" Checked="cbxAutoReply_Checked" >自动应答</CheckBox>
-                                        <CheckBox Name="showRecvDataCheckBox" Content="显示接收数据" Click="showRecvDataCheckBox_Click" IsChecked="True" Margin="10,5" Padding="0" Checked="showRecvDataCheckBox_Checked" Unchecked="showRecvDataCheckBox_Unchecked"/>
+                                      
+                                        <!--<CheckBox Name="showRecvDataCheckBox" Content="显示接收数据" Click="showRecvDataCheckBox_Click" IsChecked="True" Margin="10,5" Padding="0" Checked="showRecvDataCheckBox_Checked" Unchecked="showRecvDataCheckBox_Unchecked"/>-->
                                         <Button x:Name="clearSendDataTextBox" Content="清空发送区" Margin="10,5" Padding="3" Click="clearSendDataTextBox_Click"/>
                                         <Button Name="saveRecvDataButton" Content="保存接收区数据" Margin="10,5" Padding="3" Click="saveRecvDataButton_Click" ToolTip="使用Ctrl+S也可以快捷保存哦！"/>
                                         <Button Name="clearRecvDataBoxButton" Content="清空接收区" Margin="10,5" Padding="3" Click="clearRecvDataBoxButton_Click"></Button>
@@ -299,6 +299,7 @@
                                     </Grid.RowDefinitions>
                                     <Canvas>
                                         <Button Content="增加" Height="23" Width="45" Name="BtnAddAutoRelayCmd" />
+                                        <CheckBox x:Name="CbxAutoReply" Padding="0" Margin="10" Unchecked="cbxAutoReply_Unchecked" Checked="cbxAutoReply_Checked" >自动应答</CheckBox>
                                     </Canvas>
                                     <Grid Grid.Row="1" Background="#FFE5E5E5" Name="GdAutoRelay">
                                         <Grid.ColumnDefinitions>

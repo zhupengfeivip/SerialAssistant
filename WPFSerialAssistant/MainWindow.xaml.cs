@@ -292,7 +292,7 @@ namespace WPFSerialAssistant
 
         private void AddBatchCmdControl(BatchSendCmd batchCmd)
         {
-            BuildBatchCmdControl(Config.batchCmd.Count - 1, batchCmd);
+            BuildBatchCmdControl(Config.AutoBackRule.Count - 1, batchCmd);
         }
 
         /// <summary>
@@ -306,7 +306,7 @@ namespace WPFSerialAssistant
 
             Thickness tn = new Thickness(2, 5, 10, 5);
             int colIndex = 0;
-            int rowIndex = i + 1;
+            int rowIndex = i;
 
             TextBlock lbl = new TextBlock();
             lbl.Text = i + 1 + ". ";
@@ -324,7 +324,7 @@ namespace WPFSerialAssistant
             tbx.Text = batchCmd.SendBuff;
             tbx.Padding = tn;
             tbx.Tag = i;
-            tbx.MouseDoubleClick += Tbx_MouseDoubleClick;
+            tbx.MouseDoubleClick += TbxEditBatchCmd_MouseDoubleClick;
             Grid.SetRow(tbx, rowIndex);
             Grid.SetColumn(tbx, colIndex++);
             GdBatchCmd.Children.Add(tbx);
@@ -353,7 +353,7 @@ namespace WPFSerialAssistant
             GdBatchCmd.Children.Add(tbx);
         }
 
-        private void Tbx_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private void TbxEditBatchCmd_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             TextBox tbx = sender as TextBox;
             if (tbx == null) return;
@@ -362,6 +362,74 @@ namespace WPFSerialAssistant
 
             WinAddEditCmd win = new WinAddEditCmd();
             win.TbxName.Text = Config.batchCmd[index].Name;
+            win.Title = "修改命令";
+            win.Owner = this;
+            win.ShowDialog();
+        }
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void BuildAutoRelayCmdControl()
+        {
+            for (int i = 0; i < Config.AutoBackRule.Count; i++)
+            {
+                BuildAutoRelayCmdControl(i, Config.AutoBackRule[i]);
+            }
+        }
+
+        private void AddAutoCmdControl(AutoBackRule cmd)
+        {
+            BuildAutoRelayCmdControl(Config.AutoBackRule.Count - 1, cmd);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void BuildAutoRelayCmdControl(int i, AutoBackRule cmd)
+        {
+            RowDefinition row1 = new RowDefinition();   //实例化一个Grid行
+            row1.Height = new GridLength(30);
+            GdAutoRelay.RowDefinitions.Add(row1);
+
+            Thickness tn = new Thickness(2, 5, 10, 5);
+            int colIndex = 0;
+            int rowIndex = i + 0;
+
+            TextBlock lbl = new TextBlock();
+            lbl.Text = i + 1 + ". ";
+            lbl.Padding = tn;
+            Grid.SetRow(lbl, rowIndex);
+            Grid.SetColumn(lbl, colIndex++);
+            GdAutoRelay.Children.Add(lbl);
+
+            CheckBox cbx = new CheckBox();
+            Grid.SetRow(cbx, rowIndex);
+            Grid.SetColumn(cbx, colIndex++);
+            GdAutoRelay.Children.Add(cbx);
+
+            TextBox tbx = new TextBox();
+            tbx.Text = cmd.RecvBuff;
+            tbx.ToolTip = cmd.Name;
+            tbx.IsReadOnly = true;
+            tbx.Padding = tn;
+            tbx.Tag = i;
+            tbx.MouseDoubleClick += TbxEditAutoCmd_MouseDoubleClick;
+            Grid.SetRow(tbx, rowIndex);
+            Grid.SetColumn(tbx, colIndex++);
+            GdAutoRelay.Children.Add(tbx);
+        }
+
+        private void TbxEditAutoCmd_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            TextBox tbx = sender as TextBox;
+            if (tbx == null) return;
+
+            int index = Convert.ToInt32(tbx.Tag);
+
+            WinAddEditCmd win = new WinAddEditCmd();
+            win.TbxName.Text = Config.AutoBackRule[index].Name;
             win.Title = "修改命令";
             win.Owner = this;
             win.ShowDialog();
@@ -646,6 +714,7 @@ namespace WPFSerialAssistant
 
                 // 动态生成按钮
                 BuildBatchCmdControl();
+                BuildAutoRelayCmdControl();
 
                 log.Debug("System Start...");
             }

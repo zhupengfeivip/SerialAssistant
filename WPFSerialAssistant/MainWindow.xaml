@@ -267,12 +267,17 @@
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="25"></RowDefinition>
+                                        <RowDefinition Height="25"></RowDefinition>
                                         <RowDefinition></RowDefinition>
                                     </Grid.RowDefinitions>
                                     <Canvas>
                                         <Button Content="增加" Height="23" Width="45" Name="BtnAddBatchCmd" Click="BtnAddBatchCmd_OnClick" />
                                     </Canvas>
-                                    <Grid  Grid.Row="1" Name="GdBatchCmd" Margin="0,5">
+                                    <Canvas Grid.Row="1">
+                                        <TextBlock Text="顺序" Margin="280,2,5,2"></TextBlock>
+                                        <TextBlock Text="延时" Margin="340,2,5,2" ></TextBlock>
+                                    </Canvas>
+                                    <Grid  Grid.Row="2" Name="GdBatchCmd" Margin="0,5">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="20"></ColumnDefinition>
                                             <ColumnDefinition Width="20"></ColumnDefinition>
@@ -281,19 +286,28 @@
                                             <ColumnDefinition Width="40"></ColumnDefinition>
                                             <ColumnDefinition Width="60"></ColumnDefinition>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Text="顺序" Grid.Column="4" Grid.Row="0" ></TextBlock>
-                                        <TextBlock Text="延时" Grid.Column="5" Grid.Row="0" ></TextBlock>
                                     </Grid>
                                 </Grid>
                             </ScrollViewer>
                         </TabItem>
                         <TabItem Header="自动应答">
-                            <Grid Background="#FFE5E5E5">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="16*"/>
-                                    <ColumnDefinition Width="27*"/>
-                                </Grid.ColumnDefinitions>
-                            </Grid>
+                            <ScrollViewer>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="25"></RowDefinition>
+                                        <RowDefinition></RowDefinition>
+                                    </Grid.RowDefinitions>
+                                    <Canvas>
+                                        <Button Content="增加" Height="23" Width="45" Name="BtnAddAutoRelayCmd" />
+                                    </Canvas>
+                                    <Grid Grid.Row="1" Background="#FFE5E5E5" Name="GdAutoRelay">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="20"></ColumnDefinition>
+                                            <ColumnDefinition Width="*"></ColumnDefinition>
+                                        </Grid.ColumnDefinitions>
+                                    </Grid>
+                                </Grid>
+                            </ScrollViewer>
                         </TabItem>
                     </TabControl>
                 </Grid>

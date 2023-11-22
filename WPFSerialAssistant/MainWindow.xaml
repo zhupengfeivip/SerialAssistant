@@ -229,7 +229,7 @@
                         <ColumnDefinition Width="400"></ColumnDefinition>
                     </Grid.ColumnDefinitions>
                     <GroupBox Grid.Row="0" HorizontalAlignment="Center" Header="通讯日志" BorderBrush="{Binding ElementName=serialPortConfigPanel, Path=BorderBrush}" BorderThickness="{Binding ElementName=serialPortConfigPanel, Path=BorderThickness}">
-                        <RichTextBox Name="recvDataRichTextBox" Margin="2" BorderThickness="0" IsReadOnly="True">
+                        <RichTextBox Name="RichTextBoxMsg" Margin="2" BorderThickness="0" IsReadOnly="True">
                             <FlowDocument FontFamily="Lucida Console" Focusable="True" LineHeight="1"></FlowDocument>
                         </RichTextBox>
                     </GroupBox>

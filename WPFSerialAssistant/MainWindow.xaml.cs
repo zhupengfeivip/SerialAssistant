@@ -227,8 +227,8 @@ namespace WPFSerialAssistant
                 // p.LineHeight = 20;
                 p.Margin = new Thickness(0);
                 p.Foreground = new SolidColorBrush(showColor);
-                recvDataRichTextBox.Document.Blocks.Add(p);
-                recvDataRichTextBox.ScrollToEnd();
+                RichTextBoxMsg.Document.Blocks.Add(p);
+                RichTextBoxMsg.ScrollToEnd();
             }));
         }
 
@@ -667,29 +667,29 @@ namespace WPFSerialAssistant
                 if (Config.batchCmd.Count == 0)
                 {
                     // 增加示例数据
-                    Config.batchCmd.Add(new BatchSendCmd()
+                    for (int i = 0; i < 50; i++)
                     {
-                        Name = "测试一",
-                        SendBuff = "11 22 33",
-                        DelayMs = 100
-                    });
-                    Config.batchCmd.Add(new BatchSendCmd()
-                    {
-                        Name = "测试二",
-                        SendBuff = "11 22 33",
-                        DelayMs = 100
-                    });
+                        Config.batchCmd.Add(new BatchSendCmd()
+                        {
+                            Name = "测试一",
+                            SendBuff = "11 22 33",
+                            DelayMs = 100
+                        });
+                    }
                 }
 
                 if (Config.AutoBackRule.Count == 0)
                 {
-                    Config.AutoBackRule.Add(new AutoBackRule()
+                    for (int i = 0; i < 50; i++)
                     {
-                        Name = "测试自动回复",
-                        Description = "测试自动回复",
-                        BackBuff = "AA BB CC",
-                        RecvBuff = "CC BB AA"
-                    });
+                        Config.AutoBackRule.Add(new AutoBackRule()
+                        {
+                            Name = "测试自动回复",
+                            Description = "测试自动回复",
+                            BackBuff = "AA BB CC",
+                            RecvBuff = "CC BB AA"
+                        });
+                    }
                 }
 
                 CbxPort.Text = Config.PortName;
@@ -923,14 +923,14 @@ namespace WPFSerialAssistant
 
         private void clearRecvDataBoxButton_Click(object sender, RoutedEventArgs e)
         {
-            recvDataRichTextBox.Document.Blocks.Clear();
+            RichTextBoxMsg.Document.Blocks.Clear();
         }
 
         private void recvModeButton_Checked(object sender, RoutedEventArgs e)
         {
             RadioButton rb = sender as RadioButton;
 
-            if (recvDataRichTextBox == null)
+            if (RichTextBoxMsg == null)
             {
                 return;
             }
@@ -941,7 +941,7 @@ namespace WPFSerialAssistant
                 // TO-DO:
                 // 可以将已经存在在文本框中的内容全部转换成指定形式显示，而不是简单地清空
                 //
-                recvDataRichTextBox.Document.Blocks.Clear();
+                RichTextBoxMsg.Document.Blocks.Clear();
 
                 switch (rb.Tag.ToString())
                 {
@@ -1216,7 +1216,7 @@ namespace WPFSerialAssistant
             {
                 using (System.IO.StreamWriter sr = new StreamWriter(path))
                 {
-                    string text = (new TextRange(recvDataRichTextBox.Document.ContentStart, recvDataRichTextBox.Document.ContentEnd)).Text;
+                    string text = (new TextRange(RichTextBoxMsg.Document.ContentStart, RichTextBoxMsg.Document.ContentEnd)).Text;
 
                     sr.Write(text);
 

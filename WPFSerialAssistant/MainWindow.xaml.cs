@@ -23,6 +23,7 @@ using System.Windows.Threading;
 using NLog;
 using static System.Net.Mime.MediaTypeNames;
 using NLog.Fluent;
+using System.Windows.Media.Media3D;
 
 namespace WPFSerialAssistant
 {
@@ -141,7 +142,7 @@ namespace WPFSerialAssistant
 
         private bool shouldClear = true;
 
-        private string appendContent = "\n";
+        //private string appendContent = "\n";
 
         /// <summary>
         /// 接收并显示的方式
@@ -435,208 +436,6 @@ namespace WPFSerialAssistant
             win.ShowDialog();
         }
 
-        #region 配置信息
-        // 
-        // 目前保存的配置信息如下：
-        // 1. 波特率
-        // 2. 奇偶校验位
-        // 3. 数据位
-        // 4. 停止位
-        // 5. 字节编码
-        // 6. 发送区文本内容
-        // 7. 自动发送时间间隔
-        // 8. 窗口状态：最大化|高度+宽度
-        // 9. 面板显示状态
-        // 10. 接收数据模式
-        // 11. 是否显示接收数据
-        // 12. 发送数据模式
-        // 13. 发送追加内容
-        //
-
-        /// <summary>
-        /// 保存配置信息
-        /// </summary>
-        private void SaveConfig()
-        {
-            // 配置对象实例
-            Configuration config = new Configuration();
-
-            //// 保存波特率
-            //config.Add("baudRate", baudRateComboBox.Text);
-
-            //// 串口号
-            //config.Add("port", portsComboBox.Text);
-
-            // 保存奇偶校验位
-            config.Add("parity", parityComboBox.SelectedIndex);
-
-            // 保存数据位
-            config.Add("dataBits", dataBitsComboBox.SelectedIndex);
-
-            // 保存停止位
-            config.Add("stopBits", stopBitsComboBox.SelectedIndex);
-
-            // 字节编码
-            config.Add("encoding", encodingComboBox.SelectedIndex);
-
-            // 保存发送区文本内容
-            // config.Add("sendDataTextBoxText", tbxSendData1.Text);
-
-            // 自动发送时间间隔
-            config.Add("autoSendDataInterval", autoSendIntervalTextBox.Text);
-            config.Add("timeUnit", timeUnitComboBox.SelectedIndex);
-
-            // 窗口状态信息
-            config.Add("maxmized", this.WindowState == WindowState.Maximized);
-            config.Add("windowWidth", this.Width);
-            config.Add("windowHeight", this.Height);
-            config.Add("windowLeft", this.Left);
-            config.Add("windowTop", this.Top);
-
-            // 面板显示状态
-            config.Add("serialPortConfigPanelVisible", serialPortConfigPanel.Visibility == Visibility.Visible);
-            config.Add("autoSendConfigPanelVisible", autoSendConfigPanel.Visibility == Visibility.Visible);
-
-            //// 保存接收模式
-            //config.Add("receiveMode", receiveMode);
-            //config.Add("showReceiveData", showReceiveData);
-
-            // 保存发送模式
-            config.Add("sendMode", _sendMode);
-
-            // 保存发送追加
-            config.Add("appendContent", appendContent);
-
-
-            // 保存配置信息到磁盘中
-            Configuration.Save(config, configFile);
-        }
-
-        /// <summary>
-        /// 加载配置信息
-        /// </summary>
-        private bool LoadConfig()
-        {
-            Configuration config = Configuration.Read(configFile);
-
-            if (config == null)
-            {
-                return false;
-            }
-
-            //portsComboBox.Text = config.GetString("port");
-
-            //// 获取波特率
-            //string baudRateStr = config.GetString("baudRate");
-            //baudRateComboBox.Text = baudRateStr;
-
-            // 获取奇偶校验位
-            int parityIndex = config.GetInt("parity");
-            parityComboBox.SelectedIndex = parityIndex;
-
-            // 获取数据位
-            int dataBitsIndex = config.GetInt("dataBits");
-            dataBitsComboBox.SelectedIndex = dataBitsIndex;
-
-            // 获取停止位
-            int stopBitsIndex = config.GetInt("stopBits");
-            stopBitsComboBox.SelectedIndex = stopBitsIndex;
-
-            // 获取编码
-            int encodingIndex = config.GetInt("encoding");
-            encodingComboBox.SelectedIndex = encodingIndex;
-
-            //// 获取发送区内容
-            //string sendDataText = config.GetString("sendDataTextBoxText");
-            //tbxSendData1.Text = sendDataText;
-
-            // 获取自动发送数据时间间隔
-            string interval = config.GetString("autoSendDataInterval");
-            int timeUnitIndex = config.GetInt("timeUnit");
-            autoSendIntervalTextBox.Text = interval;
-            timeUnitComboBox.SelectedIndex = timeUnitIndex;
-
-            // 窗口状态
-            if (config.GetBool("maxmized"))
-            {
-                this.WindowState = WindowState.Maximized;
-            }
-            double width = config.GetDouble("windowWidth");
-            double height = config.GetDouble("windowHeight");
-            double top = config.GetDouble("windowTop");
-            double left = config.GetDouble("windowLeft");
-            this.Width = width;
-            this.Height = height;
-            this.Top = top;
-            this.Left = left;
-
-            // 面板显示状态
-            if (config.GetBool("serialPortConfigPanelVisible"))
-            {
-                serialSettingViewMenuItem.IsChecked = true;
-                serialPortConfigPanel.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                serialSettingViewMenuItem.IsChecked = false;
-                serialPortConfigPanel.Visibility = Visibility.Collapsed;
-            }
-
-            if (config.GetBool("autoSendConfigPanelVisible"))
-            {
-                autoSendDataSettingViewMenuItem.IsChecked = true;
-                autoSendConfigPanel.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                autoSendDataSettingViewMenuItem.IsChecked = false;
-                autoSendConfigPanel.Visibility = Visibility.Collapsed;
-            }
-
-            // 加载接收模式
-            cbxRcvShowType.SelectedIndex = config.GetInt("receiveMode");
-
-            //showReceiveData = config.GetBool("showReceiveData");
-            //showRecvDataCheckBox.IsChecked = showReceiveData;
-
-            // 加载发送模式
-            _sendMode = (SendMode)config.GetInt("sendMode");
-
-            switch (_sendMode)
-            {
-                case SendMode.Character:
-                    RbtnSendAsc.IsChecked = true;
-                    break;
-                case SendMode.Hex:
-                    RbtnSendHex.IsChecked = true;
-                    break;
-                default:
-                    break;
-            }
-
-            //加载追加内容
-            appendContent = config.GetString("appendContent");
-
-            switch (appendContent)
-            {
-                case "":
-                    appendNoneRadioButton.IsChecked = true;
-                    break;
-                case "\r":
-                    appendReturnRadioButton.IsChecked = true;
-                    break;
-                case "\n":
-                    appednNewLineRadioButton.IsChecked = true;
-                    break;
-                case "\r\n":
-                    appendReturnNewLineRadioButton.IsChecked = true;
-                    break;
-                default:
-                    break;
-            }
-            return true;
-        }
-        #endregion
 
         #endregion 变量私有方法
 
@@ -697,9 +496,76 @@ namespace WPFSerialAssistant
                 TbxSendData1.Text = Config.SendData1;
                 tbxSendData2.Text = Config.SendData2;
                 tbxSendData3.Text = Config.SendData3;
+                parityComboBox.SelectedIndex = Config.ParityIndex;
+                dataBitsComboBox.SelectedIndex = Config.DataBitsIndex;
+                stopBitsComboBox.SelectedIndex = Config.StopBitsIndex;
+                encodingComboBox.SelectedIndex = Config.EncodingIndex;
+                autoSendIntervalTextBox.Text = Config.AutoSendInterval.ToString();
+                timeUnitComboBox.SelectedIndex = Config.TimeUnitIndex;
+                WindowState = Config.WindowState;
+                Width = Config.WindowWidth;
+                Height = Config.WindowHeight;
+                Top = Config.WindowTop;
+                Left = Config.WindowLeft;
+
+                // 面板显示状态
+                if (Config.SerialPortConfigPanelVisible)
+                {
+                    serialSettingViewMenuItem.IsChecked = true;
+                    serialPortConfigPanel.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    serialSettingViewMenuItem.IsChecked = false;
+                    serialPortConfigPanel.Visibility = Visibility.Collapsed;
+                }
+
+                if (Config.AutoSendConfigPanelVisible)
+                {
+                    autoSendDataSettingViewMenuItem.IsChecked = true;
+                    autoSendConfigPanel.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    autoSendDataSettingViewMenuItem.IsChecked = false;
+                    autoSendConfigPanel.Visibility = Visibility.Collapsed;
+                }
+
+                cbxRcvShowType.SelectedIndex = Config.ReceiveMode;
+
+                _sendMode = Config.SendMode;
+                switch (_sendMode)
+                {
+                    case SendMode.Character:
+                        RbtnSendAsc.IsChecked = true;
+                        break;
+                    case SendMode.Hex:
+                        RbtnSendHex.IsChecked = true;
+                        break;
+                    default:
+                        break;
+                }
+                switch (Config.AppendContent)
+                {
+                    case "":
+                        appendNoneRadioButton.IsChecked = true;
+                        break;
+                    case "\r":
+                        appendReturnRadioButton.IsChecked = true;
+                        break;
+                    case "\n":
+                        appednNewLineRadioButton.IsChecked = true;
+                        break;
+                    case "\r\n":
+                        appendReturnNewLineRadioButton.IsChecked = true;
+                        break;
+                    default:
+                        break;
+                }
+
 
                 // 加载配置信息
-                LoadConfig();
+                // LoadConfig();
 
                 // 其他模块初始化
                 InitClockTimer();
@@ -732,7 +598,7 @@ namespace WPFSerialAssistant
 
         private void saveConfigMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            SaveConfig();
+            //SaveConfig();
             // 状态栏显示保存成功
             Information("配置信息保存成功。");
         }
@@ -740,7 +606,7 @@ namespace WPFSerialAssistant
 
         private void loadConfigMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            LoadConfig();
+            //LoadConfig();
             // 状态栏显示加载成功
             Information("配置信息加载成功。");
         }
@@ -884,7 +750,7 @@ namespace WPFSerialAssistant
                 sendText = tbxSendData3.Text.Trim();
 
             if (_sendMode == SendMode.Character)
-                sendText += appendContent;
+                sendText += Config.AppendContent;
             SerialPortWrite(sendText, _sendMode);
         }
 
@@ -1027,7 +893,7 @@ namespace WPFSerialAssistant
             RadioButton rb = sender as RadioButton;
             if (rb == null) return;
 
-            appendContent = GetAppend(rb.Tag.ToString());
+            Config.AppendContent = GetAppend(rb.Tag.ToString());
             Information("发送追加：" + rb.Content);
         }
 
@@ -1041,20 +907,20 @@ namespace WPFSerialAssistant
             switch (type)
             {
                 case "return":
-                    appendContent = "\r";
+                    Config.AppendContent = "\r";
                     break;
                 case "newline":
-                    appendContent = "\n";
+                    Config.AppendContent = "\n";
                     break;
                 case "retnewline":
-                    appendContent = "\r\n";
+                    Config.AppendContent = "\r\n";
                     break;
                 case "none":
                 default:
-                    appendContent = "";
+                    Config.AppendContent = "";
                     break;
             }
-            return appendContent;
+            return Config.AppendContent;
         }
 
         #endregion
@@ -1097,11 +963,26 @@ namespace WPFSerialAssistant
                 if (serialPort.IsOpen)
                     ClosePort();
 
-                SaveConfig();
+                //SaveConfig();
 
                 //写配置文件
                 Config.PortName = CbxPort.Text;
                 Config.BaudRate = int.Parse(CbxBaudRate.Text);
+                Config.ParityIndex = parityComboBox.SelectedIndex;
+                Config.DataBitsIndex = dataBitsComboBox.SelectedIndex;
+                Config.StopBitsIndex = stopBitsComboBox.SelectedIndex;
+                Config.EncodingIndex = encodingComboBox.SelectedIndex;
+                Config.AutoSendInterval = autoSendIntervalTextBox.Text.ToInt();
+                Config.TimeUnitIndex = timeUnitComboBox.SelectedIndex;
+                Config.WindowState = WindowState;
+                Config.WindowWidth = Width;
+                Config.WindowHeight = Height;
+                Config.WindowTop = Top;
+                Config.WindowLeft = Left;
+                Config.SerialPortConfigPanelVisible = serialSettingViewMenuItem.IsChecked;
+                Config.AutoSendConfigPanelVisible = autoSendDataSettingViewMenuItem.IsChecked;
+                Config.ReceiveMode = cbxRcvShowType.SelectedIndex;
+                Config.SendMode = _sendMode;
                 Config.SendData1 = TbxSendData1.Text.Trim();
                 Config.SendData2 = tbxSendData2.Text.Trim();
                 Config.SendData3 = tbxSendData3.Text.Trim();
@@ -1618,14 +1499,7 @@ namespace WPFSerialAssistant
         /// <returns></returns>
         private bool IsCompactViewMode()
         {
-            if (autoSendConfigPanel.Visibility == Visibility.Collapsed && autoSendConfigPanel.Visibility == Visibility.Collapsed)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return autoSendConfigPanel.Visibility == Visibility.Collapsed && autoSendConfigPanel.Visibility == Visibility.Collapsed;
         }
 
         /// <summary>

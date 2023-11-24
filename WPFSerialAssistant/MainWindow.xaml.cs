@@ -11,19 +11,11 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Animation;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 using NLog;
-using static System.Net.Mime.MediaTypeNames;
-using NLog.Fluent;
-using System.Windows.Media.Media3D;
 
 namespace WPFSerialAssistant
 {
@@ -39,15 +31,15 @@ namespace WPFSerialAssistant
 
         #region 变量私有方法
 
-        /// <summary>
-        /// 
-        /// </summary>
-        private string configFile = "default.conf";
+        ///// <summary>
+        ///// 
+        ///// </summary>
+        //private string configFile = "default.conf";
 
         /// <summary>
         /// 
         /// </summary>
-        private readonly string configPath = Environment.CurrentDirectory + "\\config.xml";
+        public static readonly string ConfigPath = Environment.CurrentDirectory + "\\config.xml";
 
         /// <summary>
         /// 
@@ -331,6 +323,7 @@ namespace WPFSerialAssistant
             GdBatchCmd.Children.Add(tbx);
 
             Button btn = new Button();
+            btn.Name = $"btnBatchCmd{i}";
             btn.Content = batchCmd.Name;
             btn.Padding = tn;
             btn.Tag = Config.batchCmd[i];
@@ -362,10 +355,18 @@ namespace WPFSerialAssistant
             int index = Convert.ToInt32(tbx.Tag);
 
             WinAddEditCmd win = new WinAddEditCmd();
+            win.CmdIndex = index;
             win.TbxName.Text = Config.batchCmd[index].Name;
-            win.Title = "修改命令";
+            win.TbxSendBuff.Text = Config.batchCmd[index].SendBuff;
+            win.TbxOrderNo.Text = Config.batchCmd[index].OrderNo.ToString();
+            win.TbxDelayMs.Text = Config.batchCmd[index].DelayMs.ToString();
+            win.RadioHex.IsChecked = Config.batchCmd[index].DataType == 2;
+            win.RadioString.IsChecked = Config.batchCmd[index].DataType == 1;
+            win.Title = "修改批量发送命令";
             win.Owner = this;
             win.ShowDialog();
+
+            tbx.Text = Config.batchCmd[index].SendBuff;
         }
 
 
@@ -431,7 +432,7 @@ namespace WPFSerialAssistant
 
             WinAddEditCmd win = new WinAddEditCmd();
             win.TbxName.Text = Config.AutoBackRule[index].Name;
-            win.Title = "修改命令";
+            win.Title = "修改自动回复命令";
             win.Owner = this;
             win.ShowDialog();
         }
@@ -445,15 +446,15 @@ namespace WPFSerialAssistant
         {
             try
             {
-                if (File.Exists(configPath))
+                if (File.Exists(ConfigPath))
                 {
                     // 配置文件存在
-                    Config = XmlHelper.XmlDeserializeFromFile<Config>(configPath);
+                    Config = XmlHelper.XmlDeserializeFromFile<Config>(ConfigPath);
                 }
                 else
                 {
                     // 配置不文件存在
-                    XmlHelper.XmlSerializeToFile(Config, configPath);
+                    XmlHelper.XmlSerializeToFile(Config, ConfigPath);
                 }
 
                 if (Config.FoupCmd.Count == 0)
@@ -769,17 +770,17 @@ namespace WPFSerialAssistant
             SerialPortWrite(sendCmd);
         }
 
-        private void sendFoupCmd_Click(object sender, RoutedEventArgs e)
-        {
-            Button btn = sender as Button;
-            if (btn == null) return;
-            BatchSendCmd sendCmd = btn.Tag as BatchSendCmd;
-            if (sendCmd == null) return;
+        //private void sendFoupCmd_Click(object sender, RoutedEventArgs e)
+        //{
+        //    Button btn = sender as Button;
+        //    if (btn == null) return;
+        //    BatchSendCmd sendCmd = btn.Tag as BatchSendCmd;
+        //    if (sendCmd == null) return;
 
-            LogSend($"{sendCmd.Name} {sendCmd.SendBuff}");
-            byte[] newCmd = new FoupHelper().GetCmdBuff(sendCmd.SendBuff);
-            SerialPortWrite(newCmd);
-        }
+        //    LogSend($"{sendCmd.Name} {sendCmd.SendBuff}");
+        //    byte[] newCmd = new FoupHelper().GetCmdBuff(sendCmd.SendBuff);
+        //    SerialPortWrite(newCmd);
+        //}
 
 
         private void saveRecvDataButton_Click(object sender, RoutedEventArgs e)
@@ -987,7 +988,7 @@ namespace WPFSerialAssistant
                 Config.SendData2 = tbxSendData2.Text.Trim();
                 Config.SendData3 = tbxSendData3.Text.Trim();
 
-                XmlHelper.XmlSerializeToFile(Config, configPath);
+                XmlHelper.XmlSerializeToFile(Config, ConfigPath);
             }
             catch (Exception ex)
             {
@@ -1619,7 +1620,7 @@ namespace WPFSerialAssistant
             win.ShowDialog();
 
             // 保存配置信息到磁盘中
-            XmlHelper.XmlSerializeToFile(Config, configPath);
+            XmlHelper.XmlSerializeToFile(Config, ConfigPath);
 
             BatchSendCmd cmd = new BatchSendCmd();
 

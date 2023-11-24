@@ -5,9 +5,26 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WPFSerialAssistant"
         mc:Ignorable="d"
-        Title="命令编辑" Height="450" Width="800" WindowStartupLocation="CenterOwner">
+        Title="命令编辑" Height="359" Width="546" WindowStartupLocation="CenterOwner">
     <Grid>
-        <TextBox Name="TbxName" VerticalAlignment="Top" Padding="5" Margin="40,51,555,0" >Hello, world!</TextBox>
-        <Button Name="BtnSave" VerticalAlignment="Top" Click="BtnSave_OnClick" Padding="3" Content="发送" Margin="276,360,382,0" Height="38"></Button>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="175*"/>
+            <ColumnDefinition Width="64*"/>
+            <ColumnDefinition Width="507*"/>
+        </Grid.ColumnDefinitions>
+        <Canvas Grid.ColumnSpan="3" HorizontalAlignment="Left" Height="288" Margin="10,10,0,0" VerticalAlignment="Top" Width="479">
+            <Label Content="名称" HorizontalAlignment="Left" Canvas.Left="56" Canvas.Top="10" VerticalAlignment="Top"/>
+            <TextBox x:Name="TbxName" Padding="5" Canvas.Left="111" VerticalAlignment="Center" Width="358" Canvas.Top="8" HorizontalAlignment="Left" />
+            <Label Content="指令" HorizontalAlignment="Left" Canvas.Left="56" Canvas.Top="63" VerticalAlignment="Top"/>
+            <TextBox x:Name="TbxSendBuff" Padding="5" Canvas.Left="111" Canvas.Top="63" VerticalAlignment="Top" Width="358" HorizontalAlignment="Center" Height="54" />
+            <Label Content="指令类型" HorizontalAlignment="Center" Canvas.Left="32" Canvas.Top="124" VerticalAlignment="Top"/>
+            <RadioButton Name="RadioString" Content="字符" HorizontalAlignment="Left" Canvas.Left="174" Canvas.Top="125" VerticalAlignment="Center" RenderTransformOrigin="3.571,0.603"/>
+            <RadioButton Name="RadioHex" Content="HEX" HorizontalAlignment="Left" Canvas.Left="113" Canvas.Top="126" VerticalAlignment="Center" IsChecked="True"/>
+            <Label Content="顺序" HorizontalAlignment="Left" Canvas.Left="56" Canvas.Top="151" VerticalAlignment="Top"/>
+            <TextBox x:Name="TbxOrderNo" Padding="5" Canvas.Left="120" Canvas.Top="149" VerticalAlignment="Center" Width="88" HorizontalAlignment="Left" />
+            <Label Content="延迟时间(毫秒)" HorizontalAlignment="Left" Canvas.Top="196" VerticalAlignment="Top"/>
+            <TextBox x:Name="TbxDelayMs" Padding="5" Canvas.Left="120" Canvas.Top="194" VerticalAlignment="Center" Width="88" HorizontalAlignment="Left" />
+            <Button x:Name="BtnSave" Click="BtnSave_OnClick" Padding="3" Content="发送" Height="38" Canvas.Left="120" Canvas.Top="250" VerticalAlignment="Top" Width="88"/>
+        </Canvas>
     </Grid>
 </Window>

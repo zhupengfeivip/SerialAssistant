@@ -22,7 +22,7 @@ namespace WPFSerialAssistant
         public string SendBuff = "11 22 33";
 
         /// <summary>
-        /// 指令类型 
+        /// 指令类型 1 字符；2 HEX
         /// </summary>
         public int DataType = 1;
 

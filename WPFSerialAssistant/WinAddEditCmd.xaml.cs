@@ -11,6 +11,9 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using Bonn.Helper;
+using NLog;
+using NLog.Fluent;
 
 namespace WPFSerialAssistant
 {
@@ -33,24 +36,54 @@ namespace WPFSerialAssistant
             set;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public int CmdIndex;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        private readonly Logger log = LogManager.GetCurrentClassLogger();
 
 
         private void BtnSave_OnClick(object sender, RoutedEventArgs e)
         {
-            if (OpType == 1)
+            try
             {
-                MainWindow.Config.batchCmd.Add(new BatchSendCmd()
+                if (OpType == 1)
                 {
-                    Name = "测试二",
-                    SendBuff = "11 22 33",
-                    DelayMs = 100
-                });
+                    // 新增
+                    MainWindow.Config.batchCmd.Add(new BatchSendCmd()
+                    {
+                        Name = "测试二",
+                        SendBuff = "11 22 33",
+                        DelayMs = 100
+                    });
+                }
+                else
+                {
+                    // 修改
+                    MainWindow.Config.batchCmd[CmdIndex].Name = TbxName.Text.Trim();
+                    MainWindow.Config.batchCmd[CmdIndex].SendBuff = TbxSendBuff.Text.Trim();
+                    if (RadioHex.IsChecked.HasValue && RadioHex.IsChecked.Value)
+                        MainWindow.Config.batchCmd[CmdIndex].DataType = 2;
+                    else
+                        MainWindow.Config.batchCmd[CmdIndex].DataType = 1;
+                    MainWindow.Config.batchCmd[CmdIndex].OrderNo = TbxOrderNo.Text.Trim().ToInt();
+                    MainWindow.Config.batchCmd[CmdIndex].DelayMs = TbxDelayMs.Text.Trim().ToInt();
+
+                    XmlHelper.XmlSerializeToFile(MainWindow.Config, MainWindow.ConfigPath);
+
+                    Close();
+                }
             }
-            else
+            catch (Exception ex)
             {
-                
+                log.Error(ex);
+                MessageBox.Show(this, ex.Message);
             }
+
         }
     }
 }
